@@ -13,16 +13,13 @@ __all__ = ['GeoGraphSegment']
 class GeoGraphSegment(GeoGraphPathItem):
     '''线段图元类。线段图元由两端点定义。
     '''
-    typePatterns = [[GeoGraphPoint, GeoGraphPoint],]
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化线段图元。
-
-        :param master: 线段图元的第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        super().__init__(master)
-        self.instance = GeoSegment(master.instance)
+        super().__init__()
+        self.instance = GeoSegment()
+        self.typePatterns = [[GeoGraphPoint, GeoGraphPoint],]
 
     def rawShape(self):
         '''原始路径形状，不具有选中范围。

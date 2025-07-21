@@ -12,7 +12,7 @@ __all__ = ['GeoGraphScene']
 
 class GeoGraphScene(QGraphicsScene):
     '''GeoGrapher绘制场景。
-    使用方法与``PyQt5.QtWidgets.QGraphicsScene``基本相同。
+    使用方法与`PyQt5.QtWidgets.QGraphicsScene`基本相同。
     '''
 
     def __init__(

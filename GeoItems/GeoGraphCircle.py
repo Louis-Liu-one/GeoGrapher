@@ -14,20 +14,17 @@ __all__ = ['GeoGraphCircle']
 class GeoGraphCircle(GeoGraphPathItem):
     '''圆图元类。圆图元由圆心与圆上一点定义。
     '''
-    typePatterns = [[GeoGraphPoint, GeoGraphPoint],]
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化圆图元。
-
-        :param master: 圆图元的第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        super().__init__(master)
-        self.instance = GeoCircle(master.instance)
+        super().__init__()
+        self.instance = GeoCircle()
+        self.typePatterns = [[GeoGraphPoint, GeoGraphPoint],]
 
     def rawShape(self):
         '''原始路径形状，不具有选中范围。
-        圆图元的路径形状仅包含圆附近，而不包含圆内。
+        圆图元的路径形状仅包含圆周附近，而不包含圆内。
         '''
         firstPosX = self._masters[0].x()
         firstPosY = self._masters[0].y()

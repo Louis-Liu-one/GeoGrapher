@@ -30,18 +30,18 @@ def _createdItemsFilter(items):
 
 
 class GeoGraphView(QGraphicsView):
-    '''GeoGrapher绘制视图。结合``GeoGrapher.GeoGridGraphScene``使用。
-    使用方法与``PyQt5.QtWidgets.QGraphicsView``相同。
+    '''GeoGrapher绘制视图。结合`GeoGrapher.GeoGridGraphScene`使用。
+    使用方法与`PyQt5.QtWidgets.QGraphicsView`相同。
     '''
 
     def __init__(self, scene, parent=None):
-        '''创建视图。参数与``PyQt5.QGraphicsView``相同。
+        '''创建视图。参数与`PyQt5.QGraphicsView`相同。
         '''
         super().__init__(scene, parent)
         self.setDragMode(self.RubberBandDrag)
         self.setRenderHints(QPainter.HighQualityAntialiasing)
         self.setMouseTracking(True)
-        self.mainMode = GeoMainMode.Select  # 主模式，默认为选择模式
+        self.mainMode = GeoMainMode.SELECT  # 主模式，默认为选择模式
         self.secondaryMode = None           # 次模式
         # 下列属性在绘制模式创建图元时使用
         self._drawModeSelectedItems = []  # 当前选择过的图元
@@ -53,7 +53,7 @@ class GeoGraphView(QGraphicsView):
         '''
         super().mousePressEvent(event)
         if event.button() == Qt.LeftButton \
-                and self.mainMode == GeoMainMode.Draw:
+                and self.mainMode == GeoMainMode.DRAW:
             self._drawModeMousePress(event.pos())
 
     def _drawModeMousePress(self, pos):
@@ -64,24 +64,25 @@ class GeoGraphView(QGraphicsView):
         '''
         selectedItem = self.itemAt(pos)  # 选中的图元
         scenePos = self.mapToScene(pos)  # 转换为场景坐标系
-        drawModeType = drawModeTypes[self.secondaryMode]  # 创建的图元类型
         # 从未选择过图元，表明此次点击是第一次，要创建新图元
         if not self._drawModeSelectedItems:
+            # 创建图元
+            self._creatingItem = self.secondaryMode.value()
+            self.scene().addItem(self._creatingItem)
             # 初始化图元的类型匹配
-            self._typePatterns = drawModeType.typePatterns.copy()
+            self._typePatterns = self._creatingItem.typePatterns.copy()
         rawTypePatterns = self._typePatterns.copy()
+        # 根据选中的图元类型筛选匹配的类型模式
         self._typePatterns = \
-            drawModeType.typePatternsFilter(
-                drawModeType, len(self._drawModeSelectedItems),
-                type(selectedItem))  # 根据选中的图元类型筛选匹配的类型模式
+            self._creatingItem.typePatternsFilter(
+                len(self._drawModeSelectedItems), type(selectedItem))
         createPointFlag = not self._typePatterns  # 是否需要创建新点
         # 若无匹配的类型模式
         if createPointFlag:
             # 此时需要创建一个点，筛选匹配点的类型模式
             self._typePatterns = \
-                drawModeType.typePatternsFilter(
-                    drawModeType, len(self._drawModeSelectedItems),
-                    GeoGraphPoint)
+                self._creatingItem.typePatternsFilter(
+                    len(self._drawModeSelectedItems), GeoGraphPoint)
         if self._typePatterns:  # 匹配成功
             self._drawModeAddItem(                     # 添加
                 self._createPointAt(scenePos)          # 创建的新点
@@ -98,20 +99,16 @@ class GeoGraphView(QGraphicsView):
                 self._creatingItem = None
             self._drawModeSelectedItems = []
 
-    def _drawModeAddItem(self, selectedItem):
-        '''创建新图元，或为当前在创建的图元添加父图元。
+    def _drawModeAddItem(self, master):
+        '''为当前在创建的图元添加父图元。
 
-        :param selectedItem: 要添加的父图元。
-        :type selectedItem: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :param master: 要添加的父图元。
+        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        if not self._drawModeSelectedItems:  # 创建新图元
-            self._creatingItem = \
-                drawModeTypes[self.secondaryMode](selectedItem)
-            self.scene().addItem(self._creatingItem)
-        else:  # 为在创建的图元添加父图元
-            self._creatingItem.addMaster(selectedItem)
+        # 为在创建的图元添加父图元
+        self._creatingItem.addMaster(master)
         # 添加至选择过的图元列表
-        self._drawModeSelectedItems.append(selectedItem)
+        self._drawModeSelectedItems.append(master)
 
     def _createPointAt(self, scenePos):
         '''在指定坐标处创建一个点。
@@ -132,7 +129,8 @@ class GeoGraphView(QGraphicsView):
             # 若附近仅一个路径图元
             elif isinstance(items[0], GeoGraphPathItem):
                 # 则创建路径上的点
-                point = GeoGraphPoint(items[0])
+                point = GeoGraphPoint()
+                point.addMaster(items[0])
         else:  # 否则创建自由点
             point = GeoGraphPoint()
             point.setPos(scenePos)
@@ -152,7 +150,8 @@ class GeoGraphView(QGraphicsView):
         :returns: 创建好的交点。
         :rtype: GeoGrapher.GeoItems.GeoGraphIntersection.GeoGraphIntersection
         '''
-        point = GeoGraphIntersection(items[0])
+        point = GeoGraphIntersection()
+        point.addMaster(items[0])
         point.addMaster(items[1])
         if isinstance(items[0], GeoGraphCircle) \
                 or isinstance(items[1], GeoGraphCircle):
@@ -162,7 +161,7 @@ class GeoGraphView(QGraphicsView):
                 point.instance.distanceToXY(sx, sy, x1, y1), \
                 point.instance.distanceToXY(sx, sy, x2, y2)
             var = GeoGraphVariable()
-            var.set(1 if l1 < l2 else 2)  # 自动判断编号
+            var.set(1 if l1 < l2 else 2)  # 自动判断交点编号
             point.addMaster(var)
         return point
 
@@ -182,6 +181,6 @@ class GeoGraphView(QGraphicsView):
         '''按下删除键时，删除选中图元。
         '''
         if event.key() == Qt.Key_Backspace \
-                and self.mainMode == GeoMainMode.Select:
+                and self.mainMode == GeoMainMode.SELECT:
             for item in self.scene().selectedItems():
                 self.scene().removeItem(item)

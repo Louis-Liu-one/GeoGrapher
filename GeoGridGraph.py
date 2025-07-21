@@ -66,5 +66,5 @@ class GeoGridGraph(QWidget):
         self._view.mainMode = mainModes[self.sender().text()]
 
     def _secondaryModeChanged(self):
-        self._view.mainMode = GeoMainMode.Draw
+        self._view.mainMode = GeoMainMode.DRAW
         self._view.secondaryMode = drawModes[self.sender().text()]

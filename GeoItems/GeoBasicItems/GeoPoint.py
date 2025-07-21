@@ -12,17 +12,15 @@ class GeoPoint(GeoItem):
     '''基础点图元类。
     '''
 
-    def __init__(self, master=None, x=None, y=None):
+    def __init__(self, x=None, y=None):
         '''初始化基础点图元。
 
-        :param master: 第一个父图元，可为None。
-        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
         :param x: 动态返回点的横坐标的函数。
         :type x: typing.Callable[[], float]
         :param y: 动态返回点的纵坐标的函数。
         :type y: typing.Callable[[], float]
         '''
-        super().__init__(master)
+        super().__init__()
         self._x, self._y = x, y
 
     def _xRaw(self):
@@ -121,8 +119,7 @@ class GeoPoint(GeoItem):
 
     def _footPointRaw(self, item):
         '''原始点在路径上的垂足坐标。
-        参见``GeoGrapher.GeoItems.GeoBasicItems.GeoPoint._footPointL()``
-        与``GeoGrapher.GeoItems.GeoBasicItems.GeoPoint._footPointC()``。
+        参见`self._footPointRawL()`与`self._footPointRawC()`。
         '''
         if isinstance(item, GeoSegment):
             return self._footPointRawL(item)
@@ -159,11 +156,8 @@ class GeoIntersection(GeoPoint):
     '''基础交点图元类。
     '''
 
-    def __init__(self, master):
-        '''初始化基础交点图元。
-
-        :param master: 第一个父图元。若与自身类型相同，则复制到自身。
-        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
+    def _addFirstMaster(self, master):
+        '''添加第一个父图元。若该父图元与自身类型相同，则复制到自身。
         '''
         if isinstance(master, GeoIntersection):  # 复制到自身
             self._masters = master.masters()
@@ -171,7 +165,7 @@ class GeoIntersection(GeoPoint):
             for item in self._masters:
                 item.addChild(self)
         else:
-            super().__init__(master)
+            self.addMaster(master)
 
     def _posLL(self):
         '''两直线交点坐标。
@@ -217,7 +211,7 @@ class GeoIntersection(GeoPoint):
         '''直线与圆其中一个交点的坐标，由第3个父图元的值决定。
         若圆心在直线上的投影的纵坐标大于或等于圆心纵坐标，则返回两交点中的左点；
         反之，则返回两交点中的右点。
-        左点与右点参见``self._leftPointFirst()``。
+        左点与右点参见`self._leftPointFirst()`。
         '''
         if len(self._masters) != 3:
             return Decimal('NaN'), Decimal('NaN')
