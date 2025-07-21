@@ -2,7 +2,8 @@
 '''
 
 from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
-from PyQt5.QtGui import QCursor, QPen, QColor, QPainterPathStroker
+from PyQt5.QtGui import QCursor, QPen, QColor
+from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import Qt
 
 from .GeoBasicItems import GeoPoint
@@ -14,24 +15,32 @@ class GeoGraphItem(QGraphicsItem):
     '''所有图元类的基类。此类不应创建实例。
     '''
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化图元。
-
-        :param master: 图元的第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
         super().__init__()
+        '''
         self._masters = [] if master is None else [master]  # 父图元
         self._children = []                                 # 子图元
         # 祖先
         self.ancestors = [] if master is None else master.ancestors.copy()
-        # 在一轮更新中尚未调用``self.updatePosition()``的父图元
+        # 在一轮更新中尚未调用`self.updatePosition()`的父图元
         self._mastersHaveNotUpdated = self._masters.copy()
         self.isCreated = False   # 是否已创建
         self.isAvailable = True  # 是否可用，即是否未删除
         self.setFlag(self.ItemIsSelectable)
         if master is not None:
             master.addChild(self)
+        '''
+        self._masters = []   # 父图元
+        self._children = []  # 子图元
+        self.ancestors = []  # 祖先
+        # 在一轮更新中尚未调用`self.updatePosition()`的父图元
+        self._mastersHaveNotUpdated = []
+        self.isCreated = False   # 是否已创建
+        self.isAvailable = True  # 是否可用，即是否未删除
+        self._noMasters = True   # 是否无祖先
+        self.setFlag(self.ItemIsSelectable)
 
     def update(self):
         '''视图调用时检查是否可用。
@@ -88,13 +97,10 @@ class GeoGraphItem(QGraphicsItem):
         for child in self._children:
             child.updatePosition(self, ancestor)
 
-    @staticmethod
-    def typePatternsFilter(selfType, idx, itemType):
+    def typePatternsFilter(self, idx, itemType):
         '''筛选可用的类型匹配。参见
-        ``GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress``。
+        `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
 
-        :param selfType: 图元自身的类型。
-        :type selfType: type
         :param idx: 当前匹配位置。
         :type idx: int
         :param itemType: 待匹配的类型。
@@ -103,7 +109,7 @@ class GeoGraphItem(QGraphicsItem):
         :rtype: list[list[type]]
         '''
         return [
-            typePattern for typePattern in selfType.typePatterns
+            typePattern for typePattern in self.typePatterns
             if len(typePattern) >= idx
             and issubclass(itemType, typePattern[idx])]
 
@@ -118,14 +124,23 @@ class GeoGraphItem(QGraphicsItem):
         :param master: 待添加的父图元。
         :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        self._masters.append(master)
-        self._mastersHaveNotUpdated.append(master)
-        master.addChild(self)
-        # 更新祖先
-        for ancestor in master.ancestors:
-            if ancestor not in self.ancestors:
-                self.ancestors.append(ancestor)
-        self.instance.addMaster(master.instance)
+        if self._noMasters:
+            self._noMasters = False
+            self._addFirstMaster(master)
+        else:
+            self._masters.append(master)
+            self._mastersHaveNotUpdated.append(master)
+            master.addChild(self)
+            # 更新祖先
+            for ancestor in master.ancestors:
+                if ancestor not in self.ancestors:
+                    self.ancestors.append(ancestor)
+            self.instance.addMaster(master.instance)
+
+    def _addFirstMaster(self, master):
+        '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。
+        '''
+        self.addMaster(master)
 
     def addChild(self, child):
         '''为本图元添加子图元。
@@ -161,14 +176,13 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
     '''所有路径图元类的基类。此类不应创建实例。
     '''
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化路径图元。
 
         :param master: 图元的第一个父图元。
         :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        QGraphicsPathItem.__init__(self)
-        GeoGraphItem.__init__(self, master)
+        super().__init__()
         self._penDrag = QPen(QColor('#000000'), 1., Qt.DashLine)  # 创建时的画笔
         self._penFinal = QPen(QColor('#000000'))     # 创建完成后未选中时的画笔
         self._penSelected = QPen(QColor('#808080'))  # 创建完成后选中时的画笔
@@ -191,7 +205,8 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         '''
         pathStroker = QPainterPathStroker()
         pathStroker.setWidth(self._selectWidth)
-        return pathStroker.createStroke(self.rawShape())
+        rawShape = QPainterPath if not self._masters else self.rawShape
+        return pathStroker.createStroke(rawShape())
 
     def paint(self, painter, option, widget=None):
         '''绘制路径。根据图元情况选择画笔。

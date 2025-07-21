@@ -11,13 +11,10 @@ class GeoGraphVariable(GeoGraphItem):
     '''变量图元类。变量图元是虚图元，不显示于场景中。
     '''
 
-    def __init__(self, master=None):
+    def __init__(self):
         '''初始化变量图元。
-
-        :param master: 变量图元的第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        super().__init__(master)
+        super().__init__()
         self.instance = GeoVariable()
 
     def get(self):

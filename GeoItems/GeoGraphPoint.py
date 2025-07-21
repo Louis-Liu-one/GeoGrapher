@@ -16,34 +16,10 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
     '''点图元类，与其它点图元类的基类。
     '''
 
-    def __init__(self, master=None):
+    def __init__(self):
         '''初始化点图元。
-
-        :param master: 点图元的第一个父图元。若不提供，则图元为自由点。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        QGraphicsEllipseItem.__init__(self)
-        GeoGraphItem.__init__(self, master)
-        self._initStates()  # 初始化状态
-        if isinstance(master, GeoGraphPoint):
-            self._copyPointToSelf(master)
-        elif master is not None:
-            self.onPath = master
-            self.instance = GeoPoint(master.instance, self.x, self.y)
-            tempPoint = GeoPoint(
-                master.instance,
-                master._mousePos().x, master._mousePos().y)
-            x, y = tempPoint.pos()
-            self.setPos(float(x), float(y))
-            self.isFree = False
-        else:
-            self._masters = []
-            self.ancestors = [self]
-        self._mastersHaveNotUpdated = self._masters.copy()
-
-    def _initStates(self):
-        '''初始化图元状态，设置画笔。
-        '''
+        super().__init__()
         self._penFinal = QPen(QColor('#000000'), 2.)
         self._penSelected = QPen(QColor('#808080'), 2.)
         self._pens = [self._penFinal, self._penSelected]
@@ -55,7 +31,21 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.isFree = True       # 是否为自由点
         self.onPath = None       # 所在路径
         self.isIntersec = False  # 是否为交点
-        self.instance = GeoPoint(x=self.x, y=self.y)  # 基础图元
+        self.instance = GeoPoint(self.x, self.y)  # 基础图元
+        self.ancestors = [self]
+        self.typePatterns = [[GeoGraphPoint],]
+
+    def _addFirstMaster(self, master):
+        '''为本图元添加第一个父图元。
+        '''
+        if isinstance(master, GeoGraphPoint):
+            self._copyPointToSelf(master)
+        else:
+            self.onPath = master
+            self.instance.addMaster(master.instance)
+            self.isFree = False
+            self.setPos(self._newPosition(master._mousePos()))
+        self._mastersHaveNotUpdated = self._masters.copy()
 
     def _copyPointToSelf(self, point):
         '''将给定点图元复制到自己。仅在初始化时调用。
@@ -73,15 +63,16 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.setFlag(self.ItemIsMovable, False)
             self.setFlag(self.ItemSendsGeometryChanges, False)
             self.isIntersec = True
-            self.instance = GeoIntersection(point.instance)
+            self.instance = GeoIntersection()
+            self.instance.addMaster(point.instance)
             self._masters = point.masters().copy()
             for item in self._masters:
                 item.addChild(self)
         elif point.onPath is not None:  # 是路径上的点
             self._masters = [point.onPath]
             point.onPath.addChild(self)
-            self.instance = GeoPoint(
-                self.onPath.instance, x=self.x, y=self.y)
+            self.instance = GeoPoint(self.x, self.y)
+            self.instance.addMaster(self.onPath.instance)
         else:  # 是自由点
             self._masters = []
             self.ancestors = [self]
@@ -102,13 +93,19 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''根据鼠标移动返回点位置。
         若点在路径上，则返回鼠标位置在路径上的投影坐标；
         若点为自由点，则返回网格吸附后的坐标。
-        仅被``self.itemChange()``调用。
+        仅被`self.itemChange()`调用。
 
         :param pos: 鼠标位置。
+        :type pos: PyQt5.QtCore.QPointF
+        :returns: 返回的点位置。
+        :rtype: PyQt5.QtCore.QPointF
         '''
         if not self.isFree:  # 路径上
-            tempPoint = GeoPoint(self.onPath.instance, x=pos.x, y=pos.y)
-            return QPointF(float(tempPoint.x()), float(tempPoint.y()))
+            tempPoint = GeoPoint(pos.x, pos.y)
+            tempPoint.addMaster(self.onPath.instance)
+            self.onPath.instance.removeChild(tempPoint)
+            x, y = tempPoint.pos()
+            return QPointF(float(x), float(y))
         # 自由点，开启网格吸附
         gridSize = self.scene().lightGridSize
         xGrid, yGrid = pos.x(), pos.y()
@@ -128,7 +125,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
                 self.setPos(float(x), float(y))
 
     def itemChange(self, change, value):
-        '''移动点时调用。参见``self._newPosition()``。
+        '''移动点时调用。参见`self._newPosition()`。
         '''
         if self.scene() \
                 and QApplication.mouseButtons() == Qt.LeftButton \
@@ -148,6 +145,3 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         rect.setHeight(self.rect().height() / zoomChange)
         rect.moveCenter(QPointF(0., 0.))
         self.setRect(rect)
-
-
-GeoGraphPoint.typePatterns = [[GeoGraphPoint],]

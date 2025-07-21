@@ -10,24 +10,27 @@ class GeoItem:
     '''所有基础图元类的基类。
     '''
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化基础图元。
-
-        :param master: 第一个父图元，可为None。
-        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
         '''
         self._children = []
-        if master is not None:
-            self._masters = [master]
-            master.addChild(self)
-        else:
-            self._masters = []
+        self._masters = []
+        self._noMasters = True
 
     def addMaster(self, master):
         '''添加父图元，并将自身添加为父图元的子图元。
         '''
-        self._masters.append(master)
-        master.addChild(self)
+        if self._noMasters:
+            self._noMasters = False
+            self._addFirstMaster(master)
+        else:
+            self._masters.append(master)
+            master.addChild(self)
+
+    def _addFirstMaster(self, master):
+        '''添加第一个父图元。子类可在此处作一些特殊处理。
+        '''
+        self.addMaster(master)
 
     def addChild(self, child):
         '''添加子图元。
@@ -62,14 +65,6 @@ class GeoSegment(GeoItem):
     '''基础线段图元类。线段图元由两端点定义。
     两端点为(x1, y1)、(x2, y2)，直线表达式为ax + by + c = 0。
     '''
-
-    def __init__(self, master):
-        '''初始化基础线段图元。
-
-        :param master: 第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
-        '''
-        super().__init__(master)
 
     def x1(self):
         '''第一个端点的横坐标。
@@ -112,14 +107,6 @@ class GeoSegment(GeoItem):
 class GeoCircle(GeoItem):
     '''基础圆图元类。圆图元由圆心与圆上一点定义。
     '''
-
-    def __init__(self, master):
-        '''初始化基础圆图元。
-
-        :param master: 第一个父图元。
-        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
-        '''
-        super().__init__(master)
 
     def o(self):
         '''圆心。

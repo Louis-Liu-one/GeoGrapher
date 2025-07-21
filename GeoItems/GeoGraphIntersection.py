@@ -2,6 +2,8 @@
 '''
 
 from .GeoGraphPoint import GeoGraphPoint
+from .GeoGraphSegment import GeoGraphSegment
+from .GeoGraphCircle import GeoGraphCircle
 from .GeoBasicItems import GeoIntersection
 
 __all__ = ['GeoGraphIntersection']
@@ -11,15 +13,23 @@ class GeoGraphIntersection(GeoGraphPoint):
     '''交点图元类。
     '''
 
-    def __init__(self, master):
+    def __init__(self):
         '''初始化交点图元。
-
-        :param master: 交点图元的第一个父图元，可为None。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
-        super().__init__(master)
+        super().__init__()
         self.setFlag(self.ItemIsMovable, False)
         self.setFlag(self.ItemSendsGeometryChanges, False)
         self.isFree = False     # 非自由点
         self.isIntersec = True  # 是交点
-        self.instance = GeoIntersection(master.instance)
+        self.instance = GeoIntersection()
+        self.ancestors = []
+        self.typePatterns = [
+            [GeoGraphSegment, GeoGraphSegment],
+            [GeoGraphCircle, GeoGraphSegment],
+            [GeoGraphSegment, GeoGraphCircle],
+            [GeoGraphCircle, GeoGraphCircle],]
+
+    def _addFirstMaster(self, master):
+        '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。
+        '''
+        self.addMaster(master)
