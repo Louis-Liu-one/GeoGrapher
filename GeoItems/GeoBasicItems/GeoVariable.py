@@ -12,6 +12,12 @@ class GeoVariable(GeoItem):
 
     def __init__(self):
         '''初始化基础变量图元。
+<<<<<<< HEAD
+=======
+
+        :param master: 第一个父图元，可为None。
+        :type master: GeoGrapher.GeoItems.GeoBasicItems.GeoItem
+>>>>>>> f5ea43bd71e8b8b27d1cc3b5e813b44fa89d30b1
         '''
         super().__init__()
         self._var = 0  # 图元值

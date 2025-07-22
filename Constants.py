@@ -9,7 +9,11 @@ from .GeoItems.GeoGraphCircle import GeoGraphCircle
 
 __all__ = [
     'GeoMainMode', 'GeoSecondaryMode',
+<<<<<<< HEAD
     'mainModes', 'drawModes',
+=======
+    'mainModes', 'drawModes', 'drawModeTypes',
+>>>>>>> f5ea43bd71e8b8b27d1cc3b5e813b44fa89d30b1
 ]
 
 
