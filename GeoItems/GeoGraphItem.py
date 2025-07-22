@@ -19,19 +19,6 @@ class GeoGraphItem(QGraphicsItem):
         '''初始化图元。
         '''
         super().__init__()
-        '''
-        self._masters = [] if master is None else [master]  # 父图元
-        self._children = []                                 # 子图元
-        # 祖先
-        self.ancestors = [] if master is None else master.ancestors.copy()
-        # 在一轮更新中尚未调用`self.updatePosition()`的父图元
-        self._mastersHaveNotUpdated = self._masters.copy()
-        self.isCreated = False   # 是否已创建
-        self.isAvailable = True  # 是否可用，即是否未删除
-        self.setFlag(self.ItemIsSelectable)
-        if master is not None:
-            master.addChild(self)
-        '''
         self._masters = []   # 父图元
         self._children = []  # 子图元
         self.ancestors = []  # 祖先
