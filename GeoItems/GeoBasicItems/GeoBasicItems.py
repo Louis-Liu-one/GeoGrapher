@@ -66,34 +66,6 @@ class GeoSegment(GeoItem):
     两端点为(x1, y1)、(x2, y2)，直线表达式为ax + by + c = 0。
     '''
 
-    def x1(self):
-        '''第一个端点的横坐标。
-        尽量不使用本函数以减少计算开销。
-        '''
-        return self._masters[0].x()
-
-    def y1(self):
-        '''第一个端点的纵坐标。
-        尽量不使用本函数以减少计算开销。
-        '''
-        return self._masters[0].y()
-
-    def x2(self):
-        '''第二个端点的横坐标。
-        尽量不使用本函数以减少计算开销。
-        '''
-        if len(self._masters) == 2:
-            return self._masters[1].x()
-        return Decimal('NaN')
-
-    def y2(self):
-        '''第二个端点的纵坐标。
-        尽量不使用本函数以减少计算开销。
-        '''
-        if len(self._masters) == 2:
-            return self._masters[1].y()
-        return Decimal('NaN')
-
     def abc(self):
         '''同时返回直线表达式中的x项系数、y项系数、常数项。
         '''
@@ -111,7 +83,8 @@ class GeoCircle(GeoItem):
     def o(self):
         '''圆心。
         '''
-        return self._masters[0]
+        if len(self._masters):
+            return self._masters[0]
 
     def r(self):
         '''半径。
