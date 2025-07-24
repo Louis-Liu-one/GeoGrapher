@@ -180,6 +180,7 @@ class GeoGraphView(QGraphicsView):
     def keyPressEvent(self, event):
         '''按下删除键时，删除选中图元。
         '''
+        super().keyPressEvent(event)
         if event.key() == Qt.Key_Backspace \
                 and self.mainMode == GeoMainMode.SELECT:
             for item in self.scene().selectedItems():

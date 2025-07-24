@@ -24,6 +24,7 @@ class GeoGraphItem(QGraphicsItem):
         self.ancestors = []  # 祖先
         # 在一轮更新中尚未调用`self.updatePosition()`的父图元
         self._mastersHaveNotUpdated = []
+        self._pens = []  # 图元所有的画笔，用于缩放比例时更新
         self.isCreated = False   # 是否已创建
         self.isAvailable = True  # 是否可用，即是否未删除
         self._noMasters = True   # 是否无祖先

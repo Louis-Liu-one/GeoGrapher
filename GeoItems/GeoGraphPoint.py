@@ -7,25 +7,26 @@ from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPointF
 
 from .GeoGraphItem import GeoGraphItem
+from .GeoGraphPointLabel import GeoGraphPointLabel
 from .GeoBasicItems import GeoPoint, GeoIntersection
 
 __all__ = ['GeoGraphPoint']
 
 
 class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
-    '''点图元类，与其它点图元类的基类。
+    '''点图元类，也是其它点图元类的基类。
     '''
 
     def __init__(self):
         '''初始化点图元。
         '''
         super().__init__()
-        self._penFinal = QPen(QColor('#000000'), 2.)
-        self._penSelected = QPen(QColor('#808080'), 2.)
+        self._penFinal = QPen(QColor(0, 0, 0), 2.)
+        self._penSelected = QPen(QColor(128, 128, 128), 2.)
         self._pens = [self._penFinal, self._penSelected]
         self.setRect(-5., -5., 10., 10.)
         self.setPen(self._penFinal)
-        self.setBrush(QBrush(QColor('#e6e6e6')))
+        self.setBrush(QBrush(QColor(230, 230, 230)))
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
         self.isFree = True       # 是否为自由点
@@ -34,6 +35,8 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.instance = GeoPoint(self.x, self.y)  # 基础图元
         self.ancestors = [self]
         self.typePatterns = [[GeoGraphPoint],]
+        self.label = GeoGraphPointLabel(self)  # 点标签
+        self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
 
     def _addFirstMaster(self, master):
         '''为本图元添加第一个父图元。
@@ -139,6 +142,9 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         super().zoomScaleChanged(zoomChange)
         rect = self.rect()
         rect.setWidth(self.rect().width() / zoomChange)
-        rect.setHeight(self.rect().height() / zoomChange)
-        rect.moveCenter(QPointF(0., 0.))
+        rect.setHeight(self.rect().height() / zoomChange)  # 更新大小
+        rect.moveCenter(QPointF(0., 0.))                   # 更新位置
         self.setRect(rect)
+        if self._labelZoomScaleFirstChange:  # 当初次调用时将标签缩放比例与场景同步
+            self._labelZoomScaleFirstChange = False
+            self.label.zoomScaleChanged(zoomChange)
