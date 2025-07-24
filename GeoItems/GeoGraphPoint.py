@@ -53,28 +53,25 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         :param point: 给定的点图元。
         :type point: GeoGrapher.GeoItems.GeoGraphPoint.GeoGraphPoint
         '''
+        point.updateSelfPosition()
         self.setPos(point.pos())
         point.scene().removeItem(point)
         self.ancestors = point.ancestors.copy()
         self.onPath = point.onPath
         self.isFree = point.isFree
+        self._masters = []
         point.removeChild(self)
         if point.isIntersec:  # 是交点
             self.setFlag(self.ItemIsMovable, False)
             self.setFlag(self.ItemSendsGeometryChanges, False)
             self.isIntersec = True
             self.instance = GeoIntersection()
-            self.instance.addMaster(point.instance)
-            self._masters = point.masters().copy()
-            for item in self._masters:
-                item.addChild(self)
+            for master in point.masters():
+                self.addMaster(master)
         elif point.onPath is not None:  # 是路径上的点
-            self._masters = [point.onPath]
-            point.onPath.addChild(self)
             self.instance = GeoPoint(self.x, self.y)
-            self.instance.addMaster(self.onPath.instance)
+            self.addMaster(point.onPath)
         else:  # 是自由点
-            self._masters = []
             self.ancestors = [self]
 
     def paint(self, painter, option, widget=None):

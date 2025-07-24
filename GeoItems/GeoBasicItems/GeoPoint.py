@@ -156,17 +156,6 @@ class GeoIntersection(GeoPoint):
     '''基础交点图元类。
     '''
 
-    def _addFirstMaster(self, master):
-        '''添加第一个父图元。若该父图元与自身类型相同，则复制到自身。
-        '''
-        if isinstance(master, GeoIntersection):  # 复制到自身
-            self._masters = master.masters()
-            self._children = master.children()
-            for item in self._masters:
-                item.addChild(self)
-        else:
-            self.addMaster(master)
-
     def _posLL(self):
         '''两直线交点坐标。
         '''

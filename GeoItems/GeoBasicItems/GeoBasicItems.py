@@ -15,22 +15,12 @@ class GeoItem:
         '''
         self._children = []
         self._masters = []
-        self._noMasters = True
 
     def addMaster(self, master):
         '''添加父图元，并将自身添加为父图元的子图元。
         '''
-        if self._noMasters:
-            self._noMasters = False
-            self._addFirstMaster(master)
-        else:
-            self._masters.append(master)
-            master.addChild(self)
-
-    def _addFirstMaster(self, master):
-        '''添加第一个父图元。子类可在此处作一些特殊处理。
-        '''
-        self.addMaster(master)
+        self._masters.append(master)
+        master.addChild(self)
 
     def addChild(self, child):
         '''添加子图元。
