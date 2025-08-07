@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
 
-from .GeoItems.GeoBasicItems import GeoItems
+from .GeoGraphItems.GeoItems import GeoItems
 
 __all__ = ['GeoGraphScene']
 

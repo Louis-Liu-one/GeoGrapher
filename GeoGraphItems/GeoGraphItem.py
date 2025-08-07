@@ -6,7 +6,7 @@ from PyQt5.QtGui import QCursor, QPen, QColor
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import Qt
 
-from .GeoBasicItems import GeoPoint
+from .GeoItems import GeoPoint
 
 __all__ = ['GeoGraphItem', 'GeoGraphPathItem']
 

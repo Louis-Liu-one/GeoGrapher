@@ -2,7 +2,7 @@
 '''
 
 from .GeoGraphItem import GeoGraphItem
-from .GeoBasicItems import GeoVariable
+from .GeoItems import GeoVariable
 
 __all__ = ['GeoGraphVariable']
 

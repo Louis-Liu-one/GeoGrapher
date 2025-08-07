@@ -5,7 +5,7 @@ from PyQt5.QtGui import QPainterPath
 
 from .GeoGraphItem import GeoGraphPathItem
 from .GeoGraphPoint import GeoGraphPoint
-from .GeoBasicItems import GeoSegment
+from .GeoItems import GeoSegment
 
 __all__ = ['GeoGraphSegment']
 

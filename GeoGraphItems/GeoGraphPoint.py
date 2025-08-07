@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QPointF
 
 from .GeoGraphItem import GeoGraphItem
 from .GeoGraphPointLabel import GeoGraphPointLabel
-from .GeoBasicItems import GeoPoint, GeoIntersection
+from .GeoItems import GeoPoint, GeoIntersection
 
 __all__ = ['GeoGraphPoint']
 

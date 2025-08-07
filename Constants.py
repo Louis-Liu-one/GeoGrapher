@@ -3,9 +3,9 @@
 
 import enum
 
-from .GeoItems.GeoGraphPoint import GeoGraphPoint
-from .GeoItems.GeoGraphSegment import GeoGraphSegment
-from .GeoItems.GeoGraphCircle import GeoGraphCircle
+from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
+from .GeoGraphItems.GeoGraphSegment import GeoGraphSegment
+from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
 
 __all__ = [
     'GeoMainMode', 'GeoSecondaryMode',

@@ -4,7 +4,7 @@
 from .GeoGraphPoint import GeoGraphPoint
 from .GeoGraphSegment import GeoGraphSegment
 from .GeoGraphCircle import GeoGraphCircle
-from .GeoBasicItems import GeoIntersection
+from .GeoItems import GeoIntersection
 
 __all__ = ['GeoGraphIntersection']
 

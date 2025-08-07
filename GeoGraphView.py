@@ -7,11 +7,11 @@ from PyQt5.QtWidgets import QMenu, QAction
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
 
-from .GeoItems.GeoGraphItem import GeoGraphPathItem
-from .GeoItems.GeoGraphPoint import GeoGraphPoint
-from .GeoItems.GeoGraphIntersection import GeoGraphIntersection
-from .GeoItems.GeoGraphCircle import GeoGraphCircle
-from .GeoItems.GeoGraphVariable import GeoGraphVariable
+from .GeoGraphItems.GeoGraphItem import GeoGraphPathItem
+from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
+from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
+from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
+from .GeoGraphItems.GeoGraphVariable import GeoGraphVariable
 from .Constants import *
 
 __all__ = ['GeoGraphView']
