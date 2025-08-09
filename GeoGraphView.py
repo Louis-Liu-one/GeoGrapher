@@ -1,7 +1,6 @@
 '''GeoGrapher绘制视图
 '''
 
-from decimal import Decimal
 from PyQt5.QtWidgets import QApplication, QGraphicsView
 from PyQt5.QtWidgets import QMenu, QAction
 from PyQt5.QtGui import QPainter
@@ -11,7 +10,8 @@ from .GeoGraphItems.GeoGraphItem import GeoGraphPathItem
 from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
-from .GeoGraphItems.GeoGraphVariable import GeoGraphVariable
+from .GeoGraphItems.GeoGraphVariable import GeoGraphIntVar
+from .GeoGraphItems.GeoItems import *
 from .Constants import *
 
 __all__ = ['GeoGraphView']
@@ -155,13 +155,16 @@ class GeoGraphView(QGraphicsView):
         point.addMaster(items[1])
         if isinstance(items[0], GeoGraphCircle) \
                 or isinstance(items[1], GeoGraphCircle):
-            (x1, y1), (x2, y2) = point.instance.posCAll()
-            sx, sy = Decimal(scenePos.x()), Decimal(scenePos.y())
-            l1, l2 = \
-                point.instance.distanceToXY(sx, sy, x1, y1), \
-                point.instance.distanceToXY(sx, sy, x2, y2)
-            var = GeoGraphVariable()
-            var.set(1 if l1 < l2 else 2)  # 自动判断交点编号
+            seg, circ = items[0].instance, items[1].instance
+            if isinstance(items[0], GeoGraphCircle):
+                seg, circ = circ, seg
+            pos1, pos2 = intersec(seg.abc(), *circ.oandr())
+            if not isLeftPoint(pos1, pos2):
+                pos1, pos2 = pos2, pos1
+            poss = PointPos(DecFloat(scenePos.x()), DecFloat(scenePos.y()))
+            l1, l2 = distanceTo(poss, pos1), distanceTo(poss, pos2)
+            var = GeoGraphIntVar()
+            var.set(1 if float(l1) < float(l2) else 2)  # 自动判断交点编号
             point.addMaster(var)
         return point
 

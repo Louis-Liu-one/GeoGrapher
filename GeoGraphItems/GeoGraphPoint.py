@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QPointF
 
 from .GeoGraphItem import GeoGraphItem
 from .GeoGraphPointLabel import GeoGraphPointLabel
-from .GeoItems import GeoPoint, GeoIntersection
+from .GeoItems import *
 
 __all__ = ['GeoGraphPoint']
 
@@ -43,6 +43,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         if isinstance(master, GeoGraphPoint):
             self._copyPointToSelf(master)
+            self.updateSelfPosition()
         else:
             self.onPath = master
             self.instance.addMaster(master.instance)
@@ -56,7 +57,6 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         :param point: 给定的点图元。
         :type point: GeoGrapher.GeoItems.GeoGraphPoint.GeoGraphPoint
         '''
-        point.updateSelfPosition()
         self.setPos(point.pos())
         point.scene().removeItem(point)
         self.ancestors = point.ancestors.copy()
@@ -101,11 +101,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         :rtype: PyQt5.QtCore.QPointF
         '''
         if not self.isFree:  # 路径上
-            tempPoint = GeoPoint(pos.x, pos.y)
-            tempPoint.addMaster(self.onPath.instance)
-            self.onPath.instance.removeChild(tempPoint)
-            x, y = tempPoint.pos()
-            return QPointF(float(x), float(y))
+            ins = self.onPath.instance
+            poss = PointPos(DecFloat(pos.x()), DecFloat(pos.y()))
+            fpos = footPoint(poss, ins.abc()) \
+                if isinstance(ins, GeoSegment) \
+                else footPoint(poss, *ins.oandr())
+            return QPointF(float(fpos.x), float(fpos.y))
         # 自由点，开启网格吸附
         gridSize = self.scene().lightGridSize
         xGrid, yGrid = pos.x(), pos.y()

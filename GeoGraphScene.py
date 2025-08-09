@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
 
-from .GeoGraphItems.GeoItems import GeoItems
+#from .GeoGraphItems.GeoItems import GeoItems
 
 __all__ = ['GeoGraphScene']
 
@@ -42,7 +42,7 @@ class GeoGraphScene(QGraphicsScene):
         super().__init__(parent)
         self.lightGridSize, self.darkGridSize = lightGridSize, darkGridSize
         self.zoomScale = 1.       # 当前放缩比例
-        self._items = GeoItems()  # 统一管理基础图元
+        #self._items = GeoItems()  # 统一管理基础图元
         self._penDark = QPen(QColor(darkPenColor), darkPenWidth)     # 深色画笔
         self._penLight = QPen(QColor(lightPenColor), lightPenWidth)  # 浅色画笔
         self.setBackgroundBrush(QColor(backgroundColor))
@@ -91,7 +91,7 @@ class GeoGraphScene(QGraphicsScene):
         '''
         super().addItem(item)
         item.zoomScaleChanged(self.zoomScale)
-        self._items.addItem(item.instance)  # 添加基础图元
+        #self._items.addItem(item.instance)  # 添加基础图元
 
     def removeItem(self, item):
         '''删除图元。
@@ -103,4 +103,4 @@ class GeoGraphScene(QGraphicsScene):
         item.isAvailable = False
         for master in item.masters():
             master.removeChild(item)  # 从所有父图元中删除图元
-        self._items.removeItem(item.instance)  # 删除基础图元
+        #self._items.removeItem(item.instance)  # 删除基础图元
