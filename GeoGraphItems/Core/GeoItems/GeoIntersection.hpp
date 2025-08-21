@@ -5,7 +5,6 @@
 #include "GeoSegment.hpp"
 #include "GeoCircle.hpp"
 #include "GeoVariable.hpp"
-#include <iostream>
 
 class GeoIntersection : public GeoPoint
 {

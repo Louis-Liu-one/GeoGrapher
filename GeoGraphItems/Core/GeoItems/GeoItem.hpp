@@ -4,7 +4,6 @@
 #define GeoItem_HPP
 
 #include <vector>
-#include <iostream>
 
 class GeoItem;
 
