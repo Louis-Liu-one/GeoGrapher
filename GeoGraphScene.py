@@ -103,4 +103,5 @@ class GeoGraphScene(QGraphicsScene):
         item.isAvailable = False
         for master in item.masters():
             master.removeChild(item)  # 从所有父图元中删除图元
+        item.instance = None
         #self._items.removeItem(item.instance)  # 删除基础图元

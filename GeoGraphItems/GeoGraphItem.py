@@ -138,8 +138,9 @@ class GeoGraphItem(QGraphicsItem):
     def removeChild(self, child):
         '''删除本图元的子图元。
         '''
-        if child in self._children:
+        if self.isAvailable and child in self._children:
             self._children.remove(child)
+            self.instance.removeChild(child.instance)
 
     def zoomScaleChanged(self, zoomChange):
         '''当视图放缩比例改变时设置画笔宽度以适应放缩比例。
