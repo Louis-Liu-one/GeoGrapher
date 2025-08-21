@@ -11,7 +11,7 @@ from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
 from .GeoGraphItems.GeoGraphVariable import GeoGraphIntVar
-from .GeoGraphItems.GeoItems import *
+from .GeoGraphItems.Core import *
 from .Constants import *
 
 __all__ = ['GeoGraphView']

@@ -58,8 +58,8 @@ PointPos footPoint(PointPos p, PointPos o, DecFloat r)
     if (x == ox and y == oy) return nanpos;
     if (x == ox) return PointPos(x, oy + (y > oy ? r : -r));
     DecFloat k = (y - oy) / (x - ox),
-        ks = fma(k, k, 1), k1 = r / sqrt(ks);
-    return PointPos(k1 + ox, fma(k, k1, oy));
+        ks = fma(k, k, 1), kd = r / sqrt(ks), kt = x > ox ? kd : -kd;
+    return PointPos(kt + ox, fma(k, kt, oy));
 }
 
 bool isLeftPoint(PointPos p1, PointPos p2)

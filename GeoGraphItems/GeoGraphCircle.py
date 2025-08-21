@@ -6,7 +6,7 @@ from PyQt5.QtCore import QPointF, QLineF
 
 from .GeoGraphItem import GeoGraphPathItem
 from .GeoGraphPoint import GeoGraphPoint
-from .GeoItems import GeoCircle
+from .Core import GeoCircle
 
 __all__ = ['GeoGraphCircle']
 

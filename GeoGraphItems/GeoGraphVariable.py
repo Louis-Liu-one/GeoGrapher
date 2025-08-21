@@ -2,7 +2,7 @@
 '''
 
 from .GeoGraphItem import GeoGraphItem
-from .GeoItems import *
+from .Core import GeoIntVar
 
 __all__ = ['GeoGraphVariable']
 

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 4.0.3)
 project(GeoItems)
 
-set(MODULE_NAME GeoItems)
+set(MODULE_NAME Core)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
@@ -11,7 +11,7 @@ set(PYTHON_LIBRARIES /Library/Frameworks/Python.framework/Versions/3.13/lib/libp
 set(Boost_INCLUDE /usr/local/Cellar/boost)
 set(PYTHON_INCLUDE /Library/Frameworks/Python.framework/Versions/3.13/include/python3.13)
 
-add_library(${MODULE_NAME} SHARED GeoItems.cpp)
+add_library(${MODULE_NAME} SHARED Core.cpp)
 target_link_libraries(${MODULE_NAME} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 include_directories(${Boost_INCLUDE} ${PYTHON_INCLUDE})

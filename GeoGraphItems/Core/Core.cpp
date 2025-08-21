@@ -11,7 +11,7 @@ bp::tuple (*intersec_LC)(LineArgs, PointPos, DecFloat)
         auto [p1, p2] = intersec(l, o, r);
         return bp::make_tuple(p1, p2);};
 
-BOOST_PYTHON_MODULE(GeoItems)
+BOOST_PYTHON_MODULE(Core)
 {
     using namespace boost::python;
     class_<DecFloat>("DecFloat",
