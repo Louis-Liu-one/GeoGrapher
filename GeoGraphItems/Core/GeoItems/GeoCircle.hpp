@@ -6,7 +6,7 @@
 #include "GeoCalc.hpp"
 #include "GeoPoint.hpp"
 
-class GeoCircle: public GeoPathItem
+class GeoCircle : public GeoPathItem
 {
     /* 圆图元类。
      */

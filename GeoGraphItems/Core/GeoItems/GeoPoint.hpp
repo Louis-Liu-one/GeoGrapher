@@ -21,7 +21,7 @@ private:
     PointPos rawPos();  // 原始坐标，即(_x(), _y())
 };
 
-GeoPoint::GeoPoint(Func x, Func y) : _x(x), _y(y) {}
+GeoPoint::GeoPoint(Func x, Func y) : GeoItem(), _x(x), _y(y) {}
 
 GeoPoint::GeoPoint(bp::object x, bp::object y)
 {

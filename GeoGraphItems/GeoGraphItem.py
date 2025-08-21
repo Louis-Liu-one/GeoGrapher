@@ -48,6 +48,7 @@ class GeoGraphItem(QGraphicsItem):
     def activelyUpdatePosition(self):
         '''主动更新。只更新子图元而不更新自身。
         '''
+        self.instance.update()
         self.updateChildrenPosition(self)
 
     def updatePosition(self, master, ancestor):
