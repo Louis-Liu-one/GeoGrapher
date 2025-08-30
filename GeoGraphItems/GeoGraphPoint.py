@@ -120,10 +120,13 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
     def updateSelfPosition(self):
         '''更新自身位置。
         '''
-        if not self.isFree:
+        if not self.isFree:  # 仅交点需更新
             x, y = self.instance.pos()
             if not x.is_nan() and not y.is_nan():
+                self.setUndefined(False)  # 设为已定义
                 self.setPos(float(x), float(y))
+            else:
+                self.setUndefined(True)   # 设为未定义
 
     def itemChange(self, change, value):
         '''移动点时调用。参见`self._newPosition()`。

@@ -22,7 +22,7 @@ public:
     void update(); // 递归更新图元
 protected:
     ItemVec _masters, _children;
-    bool _updated; // 是否已是最新
+    bool _updated = false; // 是否已是最新
 private:
     // 重新初始化，并将所有子图元重新初始化
     // top表示是否为顶层调用
@@ -36,7 +36,7 @@ public:
     virtual PointPos footPointFrom(PointPos p) = 0;
 };
 
-GeoItem::GeoItem() : _updated(false)
+GeoItem::GeoItem()
 {
     _masters.clear();
     _children.clear();

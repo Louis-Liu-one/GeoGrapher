@@ -25,9 +25,10 @@ class GeoGraphItem(QGraphicsItem):
         # 在一轮更新中尚未调用`self.updatePosition()`的父图元
         self._mastersHaveNotUpdated = []
         self._pens = []  # 图元所有的画笔，用于缩放比例时更新
-        self.isCreated = False   # 是否已创建
-        self.isAvailable = True  # 是否可用，即是否未删除
-        self._noMasters = True   # 是否无祖先
+        self.isCreated = False    # 是否已创建
+        self.isUndefined = False  # 是否未定义
+        self.isAvailable = True   # 是否可用，即是否未删除
+        self._noMasters = True    # 是否无祖先
         self.setFlag(self.ItemIsSelectable)
 
     def update(self):
@@ -44,6 +45,18 @@ class GeoGraphItem(QGraphicsItem):
                 if not item.isAvailable:
                     self.scene().removeItem(self)
                     break
+
+    def setUndefined(self, state):
+        '''设置图元的未定义状态，并递归更新其子图元状态。
+
+        :param state: 图元是否未定义。
+        :type state: bool
+        '''
+        if self.isUndefined != state:
+            self.isUndefined = state
+            self.setVisible(not self.isUndefined)
+            for child in self._children:
+                child.setUndefined(state)
 
     def activelyUpdatePosition(self):
         '''主动更新。只更新子图元而不更新自身。

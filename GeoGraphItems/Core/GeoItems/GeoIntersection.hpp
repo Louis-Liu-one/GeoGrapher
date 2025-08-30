@@ -14,11 +14,12 @@ public:
     GeoIntersection();
     PointPos pos();  // 交点坐标
 private:
-    enum {InterUndefined, InterLL, InterLC, InterCC} _mode;  // 交点模式
+    enum {InterUndefined,
+        InterLL, InterLC, InterCC} _mode = InterUndefined;  // 交点模式
     GeoSegment *s[2]; // 线段图元数组，存储_masters中的线段图元（如有）
     GeoCircle *c[2];  // 圆图元，同上
     GeoVariable<int> *i;  // 交点编号，仅有圆时使用
-    PointPos _cachedPos;
+    PointPos _cachedPos = nanpos;
     // 检查_masters[i]的类型并存入c或s中
     // 返回值中第一个表示是否成功，第二个表示是否为线段
     std::pair<bool, bool> _checkMode(int i);
@@ -26,9 +27,7 @@ private:
     bool _checkMode();
 };
 
-GeoIntersection::GeoIntersection()
-    : GeoPoint(nanfunc, nanfunc),
-    _mode(InterUndefined), _cachedPos(nanpos) {}
+GeoIntersection::GeoIntersection() : GeoPoint(nanfunc, nanfunc) {}
 
 PointPos GeoIntersection::pos()
 {

@@ -168,17 +168,21 @@ class GeoGraphView(QGraphicsView):
             point.addMaster(var)
         return point
 
+    def _findNoIntersecPoints(self, items):
+        '''在`items`列表中找到所有非交点的点图元。
+        '''
+        return [item for item in items
+            if isinstance(item, GeoGraphPoint) and not item.isIntersec]
+
     def mouseReleaseEvent(self, event):
         '''松开鼠标时，更新图元。
         '''
         super().mouseReleaseEvent(event)
         if event.button() == Qt.LeftButton:
-            selectedItems = self.scene().selectedItems()
-            # 若当前仅选中一个非交点
-            if len(selectedItems) == 1:
-                item = selectedItems[0]
-                if isinstance(item, GeoGraphPoint) and not item.isIntersec:
-                    item.activelyUpdatePosition()  # 则递归更新图元
+            # 若当前选中了非交点的点图元
+            for item in self._findNoIntersecPoints(
+                    self.scene().selectedItems()):
+                item.activelyUpdatePosition()  # 则递归更新图元
 
     def keyPressEvent(self, event):
         '''按下删除键时，删除选中图元。
