@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
 
-#from .GeoGraphItems.GeoItems import GeoItems
+from .GeoGraphItems.Core import GeoItemsManager
 
 __all__ = ['GeoGraphScene']
 
@@ -17,8 +17,8 @@ class GeoGraphScene(QGraphicsScene):
 
     def __init__(
             self, parent=None,
-            darkGridSize=100, darkPenColor='#c0c0c0', darkPenWidth=1.2,
-            lightGridSize=20, lightPenColor='#d0d0d0', lightPenWidth=.5,
+            darkGridSize=128, darkPenColor='#c0c0c0', darkPenWidth=1.2,
+            lightGridSize=32, lightPenColor='#d0d0d0', lightPenWidth=.5,
             backgroundColor='#f1f1f1'):
         '''初始化场景。
 
@@ -41,8 +41,9 @@ class GeoGraphScene(QGraphicsScene):
         '''
         super().__init__(parent)
         self.lightGridSize, self.darkGridSize = lightGridSize, darkGridSize
-        self.zoomScale = 1.       # 当前放缩比例
-        #self._items = GeoItems()  # 统一管理基础图元
+        self.zoomScale = 1.        # 当前放缩比例
+        self.tempScale = 1.        # 缓存放缩比例，用于管理网格宽度
+        self.itemsManager = GeoItemsManager()  # 统一管理基础图元
         self._penDark = QPen(QColor(darkPenColor), darkPenWidth)     # 深色画笔
         self._penLight = QPen(QColor(lightPenColor), lightPenWidth)  # 浅色画笔
         self.setBackgroundBrush(QColor(backgroundColor))
@@ -72,14 +73,24 @@ class GeoGraphScene(QGraphicsScene):
         '''放缩比例变化。
 
         :param zoomChange: 新放缩比例与原放缩比例的比值。
-        :type zomomChange: float
+        :type zoomChange: float
         '''
-        # 更新网格宽度
+        # 更新网格画笔宽度
         self._penDark.setWidthF(
             self._penDark.widthF() / zoomChange)
         self._penLight.setWidthF(
             self._penLight.widthF() / zoomChange)
         self.zoomScale *= zoomChange
+        self.tempScale *= zoomChange
+        # 更新网格宽度
+        while self.tempScale >= 2 and self.lightGridSize % 2 == 0:
+            self.tempScale /= 2
+            self.lightGridSize //= 2
+            self.darkGridSize //= 2
+        while self.tempScale <= .5:
+            self.tempScale *= 2
+            self.lightGridSize *= 2
+            self.darkGridSize *= 2
         for item in self.items():
             item.zoomScaleChanged(zoomChange)
 
@@ -91,7 +102,7 @@ class GeoGraphScene(QGraphicsScene):
         '''
         super().addItem(item)
         item.zoomScaleChanged(self.zoomScale)
-        #self._items.addItem(item.instance)  # 添加基础图元
+        self.itemsManager.addItem(item.instance)  # 添加基础图元
 
     def removeItem(self, item):
         '''删除图元。
@@ -103,5 +114,5 @@ class GeoGraphScene(QGraphicsScene):
         item.isAvailable = False
         for master in item.masters():
             master.removeChild(item)  # 从所有父图元中删除图元
+        self.itemsManager.removeItem(item.instance)  # 删除基础图元
         item.instance = None
-        #self._items.removeItem(item.instance)  # 删除基础图元

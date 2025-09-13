@@ -1,5 +1,6 @@
 
 #include "GeoItems/GeoIntersection.hpp"
+#include "GeoItems/GeoItemsManager.hpp"
 
 DecFloat (*distanceTo_P)(PointPos, PointPos) = &distanceTo;
 DecFloat (*distanceTo_L)(PointPos, LineArgs) = &distanceTo;
@@ -36,6 +37,14 @@ BOOST_PYTHON_MODULE(Core)
         .def("a", &getla, arg("self"), "直线方程中x项系数。")
         .def("b", &getlb, arg("self"), "直线方程中y项系数。")
         .def("c", &getlc, arg("self"), "直线方程中常数项。");
+    class_<GeoItemsManager>("GeoItemsManager", "图元管理类。",
+        init<>(arg("self"), "初始化图元管理对象。"))
+        .def("addItem", &GeoItemsManager::addItem,
+            (arg("self"), "item"), "添加图元。")
+        .def("removeItem", &GeoItemsManager::removeItem,
+            (arg("self"), "item"), "删除图元。")
+        .def("isAncestorItem", &GeoItemsManager::isAncestorItem,
+            (arg("self"), "item"), "查询图元是否没有父图元。");
     class_<GeoItem>("GeoItem", "所有图元类的基类。",
         init<>(arg("self"), "初始化图元。"))
         .def("addMaster", &GeoItem::addMaster, (arg("self"), "master"),

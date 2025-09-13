@@ -1,8 +1,8 @@
 '''GeoGrapher绘制视图
 '''
 
-from PyQt5.QtWidgets import QApplication, QGraphicsView
-from PyQt5.QtWidgets import QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QMenu, QAction
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
 
@@ -168,21 +168,15 @@ class GeoGraphView(QGraphicsView):
             point.addMaster(var)
         return point
 
-    def _findNoIntersecPoints(self, items):
-        '''在`items`列表中找到所有非交点的点图元。
-        '''
-        return [item for item in items
-            if isinstance(item, GeoGraphPoint) and not item.isIntersec]
-
     def mouseReleaseEvent(self, event):
         '''松开鼠标时，更新图元。
         '''
         super().mouseReleaseEvent(event)
         if event.button() == Qt.LeftButton:
             # 若当前选中了非交点的点图元
-            for item in self._findNoIntersecPoints(
-                    self.scene().selectedItems()):
-                item.activelyUpdatePosition()  # 则递归更新图元
+            for item in self.scene().selectedItems():
+                if item.isAncestorItem():
+                    item.activelyUpdatePosition()  # 则递归更新图元
 
     def keyPressEvent(self, event):
         '''按下删除键时，删除选中图元。
@@ -190,5 +184,8 @@ class GeoGraphView(QGraphicsView):
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Backspace \
                 and self.mainMode == GeoMainMode.SELECT:
-            for item in self.scene().selectedItems():
-                self.scene().removeItem(item)
+            if not isinstance(
+                    self.scene().focusItem(), QGraphicsTextItem):
+                for item in self.scene().selectedItems():
+                    if not isinstance(item, QGraphicsTextItem):
+                        self.scene().removeItem(item)

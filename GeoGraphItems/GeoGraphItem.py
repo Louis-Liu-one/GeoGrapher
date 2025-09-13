@@ -58,6 +58,10 @@ class GeoGraphItem(QGraphicsItem):
             for child in self._children:
                 child.setUndefined(state)
 
+    def isAncestorItem(self):
+        if self.scene():
+            return self.scene().itemsManager.isAncestorItem(self.instance)
+
     def activelyUpdatePosition(self):
         '''主动更新。只更新子图元而不更新自身。
         '''

@@ -19,7 +19,9 @@ public:
     void addMaster(GeoItem& master);  // 添加父图元，并将自身添加为父图元的子图元
     void addChild(GeoItem& child);    // 添加子图元，而不将自身添加为子图元的父图元
     void removeChild(GeoItem& child); // 删除子图元
-    void update(); // 递归更新图元
+    void update();      // 递归更新图元
+    ItemVec masters();  // 返回父图元
+    ItemVec children(); // 返回子图元
 protected:
     ItemVec _masters, _children;
     bool _updated = false; // 是否已是最新
@@ -68,6 +70,16 @@ void GeoItem::removeChild(GeoItem& child)
 {
     auto ch = std::find(_children.begin(), _children.end(), &child);
     if (ch != _children.end()) _children.erase(ch);
+}
+
+ItemVec GeoItem::masters()
+{
+    return _masters;
+}
+
+ItemVec GeoItem::children()
+{
+    return _children;
 }
 
 void GeoItem::reinitialize(bool top)

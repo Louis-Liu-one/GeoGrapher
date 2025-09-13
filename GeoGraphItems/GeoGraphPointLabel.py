@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFont, QColor, QPainterPath
 from PyQt5.QtCore import Qt, QRectF
 
 from .GeoGraphItem import GeoGraphItem
+from .Core import GeoItem
 
 
 class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
@@ -21,6 +22,7 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         :type label: str
         '''
         super().__init__()
+        self.instance = GeoItem()
         self.setParentItem(parent)
         self.setPos(3, 3)
         self.setTextInteractionFlags(Qt.TextEditorInteraction)  # 可编辑的标签
