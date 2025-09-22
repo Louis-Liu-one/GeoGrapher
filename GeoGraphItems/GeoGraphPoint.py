@@ -35,7 +35,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.instance = GeoPoint(self.x, self.y)  # 基础图元
         self.ancestors = [self]
         self.typePatterns = [[GeoGraphPoint],]
-        self.label = GeoGraphPointLabel(self)  # 点标签
+        self._label = GeoGraphPointLabel(self)  # 点标签
         self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
 
     def _addFirstMaster(self, master):
@@ -128,6 +128,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             else:
                 self.setUndefined(True)   # 设为未定义
 
+    def removeSelfFromScene(self):
+        '''在场景中删除时，同时在管理器中删除点图元标签。子类可覆盖此方法。
+        '''
+        self._label.pointLabelsManager.removeLabel(
+            self._label.toPlainText())
+
     def itemChange(self, change, value):
         '''移动点时调用。参见`self._newPosition()`。
         '''
@@ -151,4 +157,5 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.setRect(rect)
         if self._labelZoomScaleFirstChange:  # 当初次调用时将标签缩放比例与场景同步
             self._labelZoomScaleFirstChange = False
-            self.label.zoomScaleChanged(zoomChange)
+            self._label.setLabel()  # 初始化标签
+            self._label.zoomScaleChanged(zoomChange)

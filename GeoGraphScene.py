@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
 
+from .GeoGraphItems.GeoPointLabelsManager import GeoPointLabelsManager
 from .GeoGraphItems.Core import GeoItemsManager
 
 __all__ = ['GeoGraphScene']
@@ -44,6 +45,7 @@ class GeoGraphScene(QGraphicsScene):
         self.zoomScale = 1.        # 当前放缩比例
         self.tempScale = 1.        # 缓存放缩比例，用于管理网格宽度
         self.itemsManager = GeoItemsManager()  # 统一管理基础图元
+        self.pointLabelsManager = GeoPointLabelsManager()  # 点图元标签
         self._penDark = QPen(QColor(darkPenColor), darkPenWidth)     # 深色画笔
         self._penLight = QPen(QColor(lightPenColor), lightPenWidth)  # 浅色画笔
         self.setBackgroundBrush(QColor(backgroundColor))
@@ -111,8 +113,6 @@ class GeoGraphScene(QGraphicsScene):
         :type item: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
         '''
         super().removeItem(item)
-        item.isAvailable = False
-        for master in item.masters():
-            master.removeChild(item)  # 从所有父图元中删除图元
+        item.removeSelf()
         self.itemsManager.removeItem(item.instance)  # 删除基础图元
         item.instance = None

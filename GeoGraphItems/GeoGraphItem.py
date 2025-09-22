@@ -90,7 +90,7 @@ class GeoGraphItem(QGraphicsItem):
         self.updateChildrenPosition(ancestor)  # 更新子图元
 
     def updateSelfPosition(self):
-        '''更新自身。此方法应被子类覆盖。
+        '''更新自身。子类可覆盖此方法。
         '''
         pass
 
@@ -159,6 +159,19 @@ class GeoGraphItem(QGraphicsItem):
         if self.isAvailable and child in self._children:
             self._children.remove(child)
             self.instance.removeChild(child.instance)
+
+    def removeSelf(self):
+        '''删除自身，而不在场景中删除。
+        '''
+        self.removeSelfFromScene()
+        self.isAvailable = False
+        for master in self._masters:
+            master.removeChild(self)  # 从所有父图元中删除自身
+
+    def removeSelfFromScene(self):
+        '''在场景中删除时调用。子类可覆盖此方法。
+        '''
+        pass
 
     def zoomScaleChanged(self, zoomChange):
         '''当视图放缩比例改变时设置画笔宽度以适应放缩比例。

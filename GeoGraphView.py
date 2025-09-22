@@ -183,9 +183,9 @@ class GeoGraphView(QGraphicsView):
         '''
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Backspace \
-                and self.mainMode == GeoMainMode.SELECT:
-            if not isinstance(
+                and self.mainMode == GeoMainMode.SELECT \
+                and not isinstance(
                     self.scene().focusItem(), QGraphicsTextItem):
-                for item in self.scene().selectedItems():
-                    if not isinstance(item, QGraphicsTextItem):
-                        self.scene().removeItem(item)
+            for item in self.scene().selectedItems():
+                if not isinstance(item, QGraphicsTextItem):
+                    self.scene().removeItem(item)
