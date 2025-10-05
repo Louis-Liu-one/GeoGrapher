@@ -1,4 +1,5 @@
-
+/* GeoGrapher.GeoGraphItems.Core - 基础图元和计算几何核心
+ */
 #include "GeoItems/GeoIntersection.hpp"
 #include "GeoItems/GeoItemsManager.hpp"
 

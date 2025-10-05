@@ -6,6 +6,7 @@ import enum
 from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphSegment import GeoGraphSegment
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
+from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 
 __all__ = [
     'GeoMainMode', 'GeoSecondaryMode',
@@ -28,6 +29,7 @@ class GeoSecondaryMode(enum.Enum):
     POINT = GeoGraphPoint      # 点
     SEGMENT = GeoGraphSegment  # 线段
     CIRCLE = GeoGraphCircle    # 圆
+    INTERSECTION = GeoGraphIntersection  # 交点
 
 
 mainModes = {
@@ -37,4 +39,5 @@ drawModes = {
     'Point': GeoSecondaryMode.POINT,
     'Segment': GeoSecondaryMode.SEGMENT,
     'Circle': GeoSecondaryMode.CIRCLE,
+    'Intersection': GeoSecondaryMode.INTERSECTION,
 }  # 字符串所对绘制次模式

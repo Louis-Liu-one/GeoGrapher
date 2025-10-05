@@ -90,6 +90,7 @@ class GeoGraphView(QGraphicsView):
             # 若此次图元创建完成
             if len(self._typePatterns[0]) == len(self._drawModeSelectedItems):
                 self._creatingItem.isCreated = True
+                self._creatingItem.updateSelfPosition()
                 # 初始化，以为下次创建作准备
                 self._drawModeSelectedItems = []
                 self._creatingItem = None

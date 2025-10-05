@@ -1,4 +1,5 @@
-
+/* GeoItemsManager - 图元管理
+ */
 #ifndef GeoItemsManager_HPP
 #define GeoItemsManager_HPP
 

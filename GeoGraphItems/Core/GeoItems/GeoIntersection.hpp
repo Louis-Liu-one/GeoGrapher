@@ -1,4 +1,5 @@
-
+/* GeoIntersection - 交点图元
+ */
 #ifndef GeoIntersection_HPP
 #define GeoIntersection_HPP
 
