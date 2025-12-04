@@ -4,10 +4,12 @@
 #define GeoItem_HPP
 
 #include <vector>
+#include <unordered_set>
 
 class GeoItem;
 
 using ItemVec = std::vector<GeoItem *>;
+using ItemSet = std::unordered_set<GeoItem *>;
 
 class GeoItem
 {
@@ -21,9 +23,10 @@ public:
     void removeChild(GeoItem& child); // 删除子图元
     void update();      // 递归更新图元
     ItemVec masters();  // 返回父图元
-    ItemVec children(); // 返回子图元
+    ItemSet children(); // 返回子图元
 protected:
-    ItemVec _masters, _children;
+    ItemVec _masters;
+    ItemSet _children;
     bool _updated = false; // 是否已是最新
 private:
     // 重新初始化，并将所有子图元重新初始化
@@ -51,33 +54,28 @@ GeoItem::~GeoItem()
 
 void GeoItem::addMaster(GeoItem& master)
 {
-    if (std::find(_masters.begin(), _masters.end(),
-            &master) == _masters.end())
-    {
-        _masters.push_back(&master);
-        master.addChild(*this);
-    }
+    _masters.push_back(&master);
+    master.addChild(*this);
 }
 
 void GeoItem::addChild(GeoItem& child)
 {
-    if (std::find(_children.begin(), _children.end(),
-            &child) == _children.end())
-        _children.push_back(&child);
+    if (_children.find(&child) == _children.end())
+        _children.insert(&child);
 }
 
 void GeoItem::removeChild(GeoItem& child)
 {
-    auto ch = std::find(_children.begin(), _children.end(), &child);
+    auto ch = _children.find(&child);
     if (ch != _children.end()) _children.erase(ch);
 }
 
-ItemVec GeoItem::masters()
+ItemVec GeoItem::masters()   // No Python
 {
     return _masters;
 }
 
-ItemVec GeoItem::children()
+ItemSet GeoItem::children()  // No Python
 {
     return _children;
 }

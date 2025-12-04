@@ -39,7 +39,7 @@ PointPos GeoIntersection::pos()
         return _cachedPos = intersec(s[0]->abc(), s[1]->abc());
     if (_mode == InterLC)
     {
-        auto [p1, p2] = intersec(s[0]->abc(), c[1]->oandr());
+        auto [p1, p2] = intersec(s[0]->abc(), c[1]->o()->pos(), c[1]->r());
         if (not isLeftPoint(p1, p2)) std::swap(p1, p2);
         return _cachedPos = i->get() == 1 ? p1 : p2;
     }

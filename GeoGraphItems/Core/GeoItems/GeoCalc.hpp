@@ -12,12 +12,10 @@ std::tuple<DecFloat, PointPos, DecFloat> dstfpsq(PointPos p, LineArgs l);
 PointPos footPoint(PointPos p, LineArgs l); // 点到直线垂足
 // 点到圆垂足，意即以圆心为顶点、经过给定点的射线与圆的交点
 PointPos footPoint(PointPos p, PointPos o, DecFloat r);
-bool isLPoint(PointPos p1, PointPos p2);     // p1是否为“左点”，参考Python文档
+bool isLPoint(PointPos p1, PointPos p2);     // p1是否为“左点”，用于确定交点编号
 PointPos intersec(LineArgs l1, LineArgs l2); // 两直线交点
 // 直线与圆交点，圆用圆心与半径表示
 std::pair<PointPos, PointPos> intersec(LineArgs l, PointPos o, DecFloat r);
-std::pair<PointPos, PointPos> intersec(
-    LineArgs l, std::pair<PointPos, DecFloat> oandr);
 
 DecFloat distanceTo(PointPos p1, PointPos p2)
 {
@@ -34,6 +32,8 @@ DecFloat distanceTo(PointPos p, LineArgs l)
 
 std::tuple<DecFloat, PointPos, DecFloat> dstfpsq(PointPos p, LineArgs l)
 {
+    // 依次返回点到直线的距离（DiSTance）、点在直线上的投影坐标（FootPoint）、
+    //   以及直线方程ax + by + c = 0中的a,b两项的平方和（SQuare）
     auto [a, b, c] = l;
     if (a == 0 and b == 0) return std::make_tuple(nandf, nanpos, nandf);
     auto [x, y] = p;
@@ -92,13 +92,6 @@ std::pair<PointPos, PointPos> intersec(
         dx = -b * q, dy = a * q;
     return std::make_pair(
         PointPos(hx + dx, hy + dy), PointPos(hx - dx, hy - dy));
-}
-
-std::pair<PointPos, PointPos> intersec(
-    LineArgs l, std::pair<PointPos, DecFloat> oandr)
-{
-    auto [o, r] = oandr;
-    return intersec(l, o, r);
 }
 
 #endif

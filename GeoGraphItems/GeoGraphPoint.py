@@ -29,11 +29,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.setBrush(QBrush(QColor(230, 230, 230)))
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
+        self.isUpdatable = True
         self.isFree = True       # 是否为自由点
         self.onPath = None       # 所在路径
         self.isIntersec = False  # 是否为交点
         self.instance = GeoPoint(self.x, self.y)  # 基础图元
-        self.ancestors = [self]
+        self.ancestors = {self}
         self.typePatterns = [[GeoGraphPoint],]
         self._label = GeoGraphPointLabel(self)  # 点标签
         self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
@@ -44,8 +45,10 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         if isinstance(master, GeoGraphPoint):
             self._copyPointToSelf(master)
             self.updateSelfPosition()
-        else:
+        else:  # 路径上的点
             self.onPath = master
+            master.addChild(self)
+            self._masters.append(master)
             self.instance.addMaster(master.instance)
             self.isFree = False
             self.setPos(self._newPosition(master._mousePos()))
@@ -67,6 +70,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         if point.isIntersec:  # 是交点
             self.setFlag(self.ItemIsMovable, False)
             self.setFlag(self.ItemSendsGeometryChanges, False)
+            self.isUpdatable = False
             self.isIntersec = True
             self.instance = GeoIntersection()
             for master in point.masters():
@@ -75,7 +79,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.instance = GeoPoint(self.x, self.y)
             self.addMaster(point.onPath)
         else:  # 是自由点
-            self.ancestors = [self]
+            self.ancestors = {self}
 
     def paint(self, painter, option, widget=None):
         '''绘制点图元。自动对点的选中状态进行处理。
@@ -105,7 +109,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             poss = PointPos(DecFloat(pos.x()), DecFloat(pos.y()))
             fpos = footPoint(poss, ins.abc()) \
                 if isinstance(ins, GeoSegment) \
-                else footPoint(poss, *ins.oandr())
+                else footPoint(poss, ins.o().cpos(), ins.r())
             return QPointF(float(fpos.x), float(fpos.y))
         # 自由点，开启网格吸附
         gridSize = self.scene().lightGridSize
@@ -120,6 +124,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
     def updateSelfPosition(self):
         '''更新自身位置。
         '''
+        super().updateSelfPosition()
         if not self.isFree:  # 仅交点需更新
             x, y = self.instance.pos()
             if not x.is_nan() and not y.is_nan():

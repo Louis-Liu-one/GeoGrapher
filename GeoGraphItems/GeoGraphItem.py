@@ -19,15 +19,16 @@ class GeoGraphItem(QGraphicsItem):
         '''初始化图元。
         '''
         super().__init__()
-        self._masters = []   # 父图元
-        self._children = []  # 子图元
-        self.ancestors = []  # 祖先
+        self._masters = []      # 父图元
+        self._children = set()  # 子图元
+        self.ancestors = set()  # 祖先
         # 在一轮更新中尚未调用`self.updatePosition()`的父图元
         self._mastersHaveNotUpdated = []
         self._pens = []  # 图元所有的画笔，用于缩放比例时更新
         self.isCreated = False    # 是否已创建
         self.isUndefined = False  # 是否未定义
         self.isAvailable = True   # 是否可用，即是否未删除
+        self.isUpdatable = False  # 是否可作为顶层结点更新
         self._noMasters = True    # 是否无祖先
         self.setFlag(self.ItemIsSelectable)
 
@@ -58,10 +59,6 @@ class GeoGraphItem(QGraphicsItem):
             for child in self._children:
                 child.setUndefined(state)
 
-    def isAncestorItem(self):
-        if self.scene():
-            return self.scene().itemsManager.isAncestorItem(self.instance)
-
     def activelyUpdatePosition(self):
         '''主动更新。只更新子图元而不更新自身。
         '''
@@ -69,7 +66,7 @@ class GeoGraphItem(QGraphicsItem):
         self.updateChildrenPosition(self)
 
     def updatePosition(self, master, ancestor):
-        '''被动更新。为避免反复更新子图元，仅当一轮更新中最后一次调用时更新。
+        '''被动更新。为避免反复更新同一图元，仅当一轮更新中最后一次调用时更新。
 
         :param master: 调用该函数的父图元。
         :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
@@ -78,14 +75,13 @@ class GeoGraphItem(QGraphicsItem):
         '''
         if master in self._mastersHaveNotUpdated:
             self._mastersHaveNotUpdated.remove(master)
-        for i in range(len(self._mastersHaveNotUpdated) - 1, -1, -1):
-            # 若仍有相关父图元未调用该函数
-            if ancestor in self._mastersHaveNotUpdated[i].ancestors:
-                # 则不更新子图元
+        while self._mastersHaveNotUpdated:  # 保证所有相关父图元已全部更新
+            i = self._mastersHaveNotUpdated[-1]
+            if ancestor in i.ancestors:
                 return
-            self._mastersHaveNotUpdated.pop(i)  # 删除无关的父图元
-        # 本轮更新完毕，重新初始化并更新
-        self._mastersHaveNotUpdated = self._masters.copy()
+            self._mastersHaveNotUpdated.pop()
+        # 本轮更新完毕，向下更新
+        self._mastersHaveNotUpdated = self._masters.copy()  # 重新初始化
         self.updateSelfPosition()              # 更新自身
         self.updateChildrenPosition(ancestor)  # 更新子图元
 
@@ -140,7 +136,7 @@ class GeoGraphItem(QGraphicsItem):
             # 更新祖先
             for ancestor in master.ancestors:
                 if ancestor not in self.ancestors:
-                    self.ancestors.append(ancestor)
+                    self.ancestors.add(ancestor)
             self.instance.addMaster(master.instance)
 
     def _addFirstMaster(self, master):
@@ -151,7 +147,7 @@ class GeoGraphItem(QGraphicsItem):
     def addChild(self, child):
         '''为本图元添加子图元。
         '''
-        self._children.append(child)
+        self._children.add(child)
 
     def removeChild(self, child):
         '''删除本图元的子图元。

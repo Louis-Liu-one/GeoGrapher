@@ -43,9 +43,7 @@ BOOST_PYTHON_MODULE(Core)
         .def("addItem", &GeoItemsManager::addItem,
             (arg("self"), "item"), "添加图元。")
         .def("removeItem", &GeoItemsManager::removeItem,
-            (arg("self"), "item"), "删除图元。")
-        .def("isAncestorItem", &GeoItemsManager::isAncestorItem,
-            (arg("self"), "item"), "查询图元是否没有父图元。");
+            (arg("self"), "item"), "删除图元。");
     class_<GeoItem>("GeoItem", "所有图元类的基类。",
         init<>(arg("self"), "初始化图元。"))
         .def("addMaster", &GeoItem::addMaster, (arg("self"), "master"),
@@ -57,6 +55,7 @@ BOOST_PYTHON_MODULE(Core)
         .def("update", &GeoItem::update, arg("self"), "递归更新图元。");
     class_<GeoPoint, bases<GeoItem>>("GeoPoint", "点图元类。",
         init<object, object>((arg("self"), "x", "y"), "初始化点图元。"))
+        .def("cpos", &GeoPoint::pos, arg("self"), "点图元位置，返回PointPos对象。")
         .def("pos", &GeoPoint::posPy, arg("self"), "点图元位置。");
     class_<GeoSegment, bases<GeoItem>>("GeoSegment", "线段图元类。",
         init<>(arg("self"), "初始化线段图元。"))
@@ -67,7 +66,6 @@ BOOST_PYTHON_MODULE(Core)
             return_value_policy<reference_existing_object>())
         .def("onc", &GeoCircle::onc, arg("self"), "圆上一点。",
             return_value_policy<reference_existing_object>())
-        .def("oandr", &GeoCircle::oandrPy, arg("self"), "圆心坐标和半径。")
         .def("r", &GeoCircle::r, arg("self"), "半径。");
     class_<GeoIntersection, bases<GeoPoint>>(
         "GeoIntersection", "交点图元类。",

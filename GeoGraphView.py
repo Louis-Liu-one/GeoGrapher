@@ -10,7 +10,7 @@ from .GeoGraphItems.GeoGraphItem import GeoGraphPathItem
 from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
-from .GeoGraphItems.GeoGraphVariable import GeoGraphIntVar
+from .GeoGraphItems.GeoGraphVariable import GeoGraphIsecNoVar
 from .GeoGraphItems.Core import *
 from .Constants import *
 
@@ -57,7 +57,7 @@ class GeoGraphView(QGraphicsView):
             self._drawModeMousePress(event.pos())
 
     def _drawModeMousePress(self, pos):
-        '''按下鼠标时，创建图元或添加父图元。
+        '''当在绘制模式按下鼠标时，创建图元或添加父图元。
 
         :param pos: 鼠标点击的位置，在视图坐标系下。
         :type pos: PyQt5.QtCore.QPoint
@@ -159,12 +159,12 @@ class GeoGraphView(QGraphicsView):
             seg, circ = items[0].instance, items[1].instance
             if isinstance(items[0], GeoGraphCircle):
                 seg, circ = circ, seg
-            pos1, pos2 = intersec(seg.abc(), *circ.oandr())
+            pos1, pos2 = intersec(seg.abc(), circ.o().cpos(), circ.r())
             if not isLeftPoint(pos1, pos2):
                 pos1, pos2 = pos2, pos1
             poss = PointPos(DecFloat(scenePos.x()), DecFloat(scenePos.y()))
             l1, l2 = distanceTo(poss, pos1), distanceTo(poss, pos2)
-            var = GeoGraphIntVar()
+            var = GeoGraphIsecNoVar()
             var.set(1 if float(l1) < float(l2) else 2)  # 自动判断交点编号
             point.addMaster(var)
         return point
@@ -174,9 +174,9 @@ class GeoGraphView(QGraphicsView):
         '''
         super().mouseReleaseEvent(event)
         if event.button() == Qt.LeftButton:
-            # 若当前选中了非交点的点图元
+            # 若当前选中了可操作图元
             for item in self.scene().selectedItems():
-                if item.isAncestorItem():
+                if item.isUpdatable and not item.isUndefined:
                     item.activelyUpdatePosition()  # 则递归更新图元
 
     def keyPressEvent(self, event):

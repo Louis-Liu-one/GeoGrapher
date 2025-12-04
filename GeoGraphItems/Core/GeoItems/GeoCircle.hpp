@@ -16,8 +16,6 @@ public:
     GeoPoint *o();   // 圆心
     GeoPoint *onc(); // 圆上一点
     DecFloat r();    // 半径
-    std::pair<PointPos, DecFloat> oandr(); // 一次返回圆心坐标与半径
-    bp::tuple oandrPy();                   // oandr()的Python形式
 private:
     GeoPoint *_o = nullptr, *_onc = nullptr;
     DecFloat _cachedr = nandf;
@@ -51,22 +49,9 @@ DecFloat GeoCircle::r()
         distanceTo(p1->pos(), p2->pos()) : nandf;
 }
 
-std::pair<PointPos, DecFloat> GeoCircle::oandr()
-{
-    if (_masters.size() != 2) return std::make_pair(nanpos, nandf);
-    return std::make_pair(o()->pos(), r());
-}
-
-bp::tuple GeoCircle::oandrPy()
-{
-    auto [o, r] = oandr();
-    return bp::make_tuple(o, r);
-}
-
 PointPos GeoCircle::footPointFrom(PointPos p)
 {
-    auto [o, r] = oandr();
-    return footPoint(p, o, r);
+    return footPoint(p, o()->pos(), r());
 }
 
 #endif
