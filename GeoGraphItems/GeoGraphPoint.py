@@ -52,7 +52,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.instance.addMaster(master.instance)
             self.isFree = False
             self.setPos(self._newPosition(master._mousePos()))
-        self._mastersHaveNotUpdated = self._masters.copy()
+        self._mastersHaveNotUpdated = set(self._masters)
 
     def _copyPointToSelf(self, point):
         '''将给定点图元复制到自己。仅在初始化时调用。

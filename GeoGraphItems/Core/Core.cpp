@@ -8,9 +8,13 @@ DecFloat (*distanceTo_L)(PointPos, LineArgs) = &distanceTo;
 PointPos (*footPoint_L)(PointPos, LineArgs) = &footPoint;
 PointPos (*footPoint_C)(PointPos, PointPos, DecFloat) = &footPoint;
 PointPos (*intersec_LL)(LineArgs, LineArgs) = &intersec;
-bp::tuple (*intersec_LC)(LineArgs, PointPos, DecFloat)
-    = [](LineArgs l, PointPos o, DecFloat r){
-        auto [p1, p2] = intersec(l, o, r);
+bp::tuple (*intersec_LC)(LineArgs, PointPos, DecFloat, PointPos, PointPos)
+    = [](LineArgs l, PointPos o, DecFloat r, PointPos p, PointPos q){
+        auto [p1, p2] = intersec(l, o, r, p, q);
+        return bp::make_tuple(p1, p2);};
+bp::tuple (*intersec_CC)(PointPos, DecFloat, PointPos, DecFloat)
+    = [](PointPos o1, DecFloat r1, PointPos o2, DecFloat r2){
+        auto [p1, p2] = intersec(o1, r1, o2, r2);
         return bp::make_tuple(p1, p2);};
 
 BOOST_PYTHON_MODULE(Core)
@@ -52,14 +56,18 @@ BOOST_PYTHON_MODULE(Core)
             (arg("self"), "child"), "添加子图元。")
         .def("removeChild", &GeoItem::removeChild,
             (arg("self"), "child"), "删除子图元。")
-        .def("update", &GeoItem::update, arg("self"), "递归更新图元。");
+        .def("update", &GeoItem::update, arg("self"), "更新本图元。");
     class_<GeoPoint, bases<GeoItem>>("GeoPoint", "点图元类。",
         init<object, object>((arg("self"), "x", "y"), "初始化点图元。"))
         .def("cpos", &GeoPoint::pos, arg("self"), "点图元位置，返回PointPos对象。")
         .def("pos", &GeoPoint::posPy, arg("self"), "点图元位置。");
     class_<GeoSegment, bases<GeoItem>>("GeoSegment", "线段图元类。",
         init<>(arg("self"), "初始化线段图元。"))
-        .def("abc", &GeoSegment::abc, arg("self"), "线段参数。");
+        .def("abc", &GeoSegment::abc, arg("self"), "线段参数。")
+        .def("point1", &GeoSegment::point1, arg("self"), "第一个端点。",
+            return_value_policy<reference_existing_object>())
+        .def("point2", &GeoSegment::point2, arg("self"), "第二个端点。",
+            return_value_policy<reference_existing_object>());
     class_<GeoCircle, bases<GeoItem>>("GeoCircle", "圆图元类。",
         init<>(arg("self"), "初始化圆图元。"))
         .def("o", &GeoCircle::o, arg("self"), "圆心。",
@@ -82,12 +90,9 @@ BOOST_PYTHON_MODULE(Core)
         "点在直线上的投影，直线由`LineArgs`对象定义。");
     def("footPoint", footPoint_C, (arg("p"), "o", "r"),
         "以圆心为端点、经过给定点的射线与圆周的交点，圆由圆心与半径定义。");
-    def("isLeftPoint", isLeftPoint, (arg("p1"), "p2"),
-        "返回一个布尔值，表示第一个参数是否是两参数中的“左点”。\n"
-        "若两点横坐标不相等，则横坐标较小的一点是“左点”；\n"
-        "若横坐标相等，则纵坐标较大的一点是“左点”。\n"
-        "另一点是两点中的“右点”。");
     def("intersec", intersec_LL, (arg("l1"), "l2"), "求两直线的交点。");
-    def("intersec", intersec_LC,
-        (arg("l"), "o", "r"), "求直线与圆的两交点，以元组返回。");
+    def("intersec", intersec_LC, (arg("l"), "o", "r", "p0", "p1"),
+        "求直线与圆的两交点，以元组返回。最后2个参数传入直线上的两点。");
+    def("intersec", intersec_CC,
+        (arg("o1"), "r1", "o2", "r2"), "求两圆的两交点，以元组返回。");
 }

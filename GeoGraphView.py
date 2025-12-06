@@ -1,6 +1,8 @@
 '''GeoGrapher绘制视图
 '''
 
+import collections
+
 from PyQt5.QtWidgets import QApplication, QMenu, QAction
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem
 from PyQt5.QtGui import QPainter
@@ -156,13 +158,19 @@ class GeoGraphView(QGraphicsView):
         point.addMaster(items[1])
         if isinstance(items[0], GeoGraphCircle) \
                 or isinstance(items[1], GeoGraphCircle):
-            seg, circ = items[0].instance, items[1].instance
-            if isinstance(items[0], GeoGraphCircle):
-                seg, circ = circ, seg
-            pos1, pos2 = intersec(seg.abc(), circ.o().cpos(), circ.r())
-            if not isLeftPoint(pos1, pos2):
-                pos1, pos2 = pos2, pos1
             poss = PointPos(DecFloat(scenePos.x()), DecFloat(scenePos.y()))
+            if isinstance(items[0], GeoGraphCircle) \
+                    and isinstance(items[1], GeoGraphCircle):
+                circ1, circ2 = items[0].instance, items[1].instance
+                pos1, pos2 = intersec(
+                    circ1.o().cpos(), circ1.r(), circ2.o().cpos(), circ2.r())
+            else:
+                seg, circ = items[0].instance, items[1].instance
+                if isinstance(items[0], GeoGraphCircle):
+                    seg, circ = circ, seg
+                pos1, pos2 = intersec(
+                    seg.abc(), circ.o().cpos(), circ.r(),
+                    seg.point1().cpos(), seg.point2().cpos())
             l1, l2 = distanceTo(poss, pos1), distanceTo(poss, pos2)
             var = GeoGraphIsecNoVar()
             var.set(1 if float(l1) < float(l2) else 2)  # 自动判断交点编号
@@ -170,14 +178,26 @@ class GeoGraphView(QGraphicsView):
         return point
 
     def mouseReleaseEvent(self, event):
-        '''松开鼠标时，更新图元。
+        '''松开鼠标时，更新图元。以当前选中的可操作图元为顶层，开始更新。
         '''
         super().mouseReleaseEvent(event)
         if event.button() == Qt.LeftButton:
             # 若当前选中了可操作图元
+            q = collections.deque()
+            ancestors = set()
             for item in self.scene().selectedItems():
                 if item.isUpdatable and not item.isUndefined:
-                    item.activelyUpdatePosition()  # 则递归更新图元
+                    q.append(item)
+                    ancestors.add(item)
+            while q:  # 将相关图元全部还原为更新前的准备状态
+                master = q.popleft()
+                for child in master.children():
+                    q.append(child)  # 广度优先搜索
+                master.updateFromMasters()
+                master.instance.update()
+            for ancestor in ancestors:
+                for child in ancestor.children():
+                    child.updatePosition(ancestor, ancestors)
 
     def keyPressEvent(self, event):
         '''按下删除键时，删除选中图元。

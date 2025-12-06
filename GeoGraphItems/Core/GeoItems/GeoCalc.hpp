@@ -12,10 +12,15 @@ std::tuple<DecFloat, PointPos, DecFloat> dstfpsq(PointPos p, LineArgs l);
 PointPos footPoint(PointPos p, LineArgs l); // 点到直线垂足
 // 点到圆垂足，意即以圆心为顶点、经过给定点的射线与圆的交点
 PointPos footPoint(PointPos p, PointPos o, DecFloat r);
-bool isLPoint(PointPos p1, PointPos p2);     // p1是否为“左点”，用于确定交点编号
+// 判断给定角是否是逆时针角，返回正数代表是，负数代表非，0代表给定三点共线
+int isCounterclockwiseAngle(PointPos a, PointPos o, PointPos b);
 PointPos intersec(LineArgs l1, LineArgs l2); // 两直线交点
 // 直线与圆交点，圆用圆心与半径表示
-std::pair<PointPos, PointPos> intersec(LineArgs l, PointPos o, DecFloat r);
+std::pair<PointPos, PointPos> intersec(
+    LineArgs l, PointPos o, DecFloat r, PointPos p0, PointPos p1);
+// 两圆交点，圆用圆心与半径表示
+std::pair<PointPos, PointPos> intersec(
+    PointPos o1, DecFloat r1, PointPos o2, DecFloat r2);
 
 DecFloat distanceTo(PointPos p1, PointPos p2)
 {
@@ -62,10 +67,15 @@ PointPos footPoint(PointPos p, PointPos o, DecFloat r)
     return PointPos(kt + ox, fma(k, kt, oy));
 }
 
-bool isLeftPoint(PointPos p1, PointPos p2)
+int isCounterclockwiseAngle(PointPos a, PointPos o, PointPos b)
 {
-    return p1.first != p2.first ?
-        p1.first < p2.first : p1.second > p2.second;
+    auto [xa, ya] = a;
+    auto [xo, yo] = o;
+    auto [xb, yb] = b;
+    DecFloat x1 = (xo - xa) * (yb - yo), x2 = (yo - ya) * (xb - xo);
+    if (x1 > x2) return -1;
+    else if (x1 < x2) return 1;
+    return 0;
 }
 
 PointPos intersec(LineArgs l1, LineArgs l2)
@@ -79,7 +89,7 @@ PointPos intersec(LineArgs l1, LineArgs l2)
 }
 
 std::pair<PointPos, PointPos> intersec(
-    LineArgs l, PointPos o, DecFloat r)
+    LineArgs l, PointPos o, DecFloat r, PointPos p0, PointPos p1)
 {
     auto [a, b, c] = l;
     if (a == 0 and b == 0)
@@ -90,8 +100,39 @@ std::pair<PointPos, PointPos> intersec(
     auto [hx, hy] = hp;
     DecFloat d = (r + h) * (r - h), q = sqrt(d / s),
         dx = -b * q, dy = a * q;
-    return std::make_pair(
-        PointPos(hx + dx, hy + dy), PointPos(hx - dx, hy - dy));
+    PointPos i1 = PointPos(hx + dx, hy + dy),
+        i2 = PointPos(hx - dx, hy - dy);
+    int prop = isCounterclockwiseAngle(i2, i1, o);
+    if (prop > 0) return std::make_pair(i1, i2);
+    else if (prop < 0) return std::make_pair(i2, i1);
+    else
+    {
+        DecFloat d1 = distanceTo(p0, i1), d2 = distanceTo(p0, i2);
+        if (d1 > d2) return std::make_pair(i2, i1);
+        else if (d1 < d2 or distanceTo(p1, i1) > distanceTo(p1, i2))
+            return std::make_pair(i1, i2);
+        else return std::make_pair(i2, i1);
+    }
+}
+
+std::pair<PointPos, PointPos> intersec(
+    PointPos o1, DecFloat r1, PointPos o2, DecFloat r2)
+{
+    auto [x1, y1] = o1;
+    auto [x2, y2] = o2;
+    DecFloat a = y2 - y1, b = x1 - x2, c = fma(x2, y1, -x1 * y2),
+        sq = fma(a, a, b * b), l = sqrt(sq),
+        rs = r1 + r2, rd = r1 - r2, l2 = 2 * l;
+    if (rs < l) return std::make_pair(nanpos, nanpos);
+    DecFloat l1 = (l + rs) * (l + rd) / l2 - r1, k = l1 / l,
+        x0 = x1 - k * b, y0 = y1 + k * a,
+        h = sqrt(fma(r1, r1, -l1 * l1) / sq),
+        dx = h * a, dy = h * b;
+    PointPos i1 = PointPos(x0 + dx, y0 + dy),
+        i2 = PointPos(x0 - dx, y0 - dy);
+    int prop = isCounterclockwiseAngle(o1, i1, o2);
+    if (prop > 0) return std::make_pair(i1, i2);
+    else return std::make_pair(i2, i1);
 }
 
 #endif

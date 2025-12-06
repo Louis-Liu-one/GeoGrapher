@@ -1,6 +1,8 @@
 '''GeoGrapher图元基类
 '''
 
+import collections
+
 from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
 from PyQt5.QtGui import QCursor, QPen, QColor
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
@@ -23,7 +25,7 @@ class GeoGraphItem(QGraphicsItem):
         self._children = set()  # 子图元
         self.ancestors = set()  # 祖先
         # 在一轮更新中尚未调用`self.updatePosition()`的父图元
-        self._mastersHaveNotUpdated = []
+        self._mastersHaveNotUpdated = set()
         self._pens = []  # 图元所有的画笔，用于缩放比例时更新
         self.isCreated = False    # 是否已创建
         self.isUndefined = False  # 是否未定义
@@ -59,45 +61,46 @@ class GeoGraphItem(QGraphicsItem):
             for child in self._children:
                 child.setUndefined(state)
 
-    def activelyUpdatePosition(self):
-        '''主动更新。只更新子图元而不更新自身。
-        '''
-        self.instance.update()
-        self.updateChildrenPosition(self)
+    def updateFromMasters(self, master=None, ancestors=None):
+        '''若没有传入`master`，则初始化`self._mastersHaveNotUpdated`。
+        若传入`master`，则从`self._mastersHaveNotUpdated`中删除之；
+        若本轮更新中该图元所有相关父图元均已更新，即`self._mastersHaveNotUpdated`
+        已空，则该图元可以更新，返回`True`，反之返回`False`。
 
-    def updatePosition(self, master, ancestor):
+        :param master: 调用该函数的父图元。
+        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :param ancestors: 本轮更新中的顶层图元。
+        :type ancestors: set[GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem]
+        '''
+        if master is not None:
+            ancestors = set(ancestors)
+            if master in self._mastersHaveNotUpdated:
+                self._mastersHaveNotUpdated.remove(master)
+            while self._mastersHaveNotUpdated:
+                item = self._mastersHaveNotUpdated.pop()
+                if not item.ancestors.isdisjoint(ancestors):
+                    self._mastersHaveNotUpdated.add(item)
+                    return False
+        self._mastersHaveNotUpdated = set(self._masters)
+        return True
+
+    def updatePosition(self, master, ancestors):
         '''被动更新。为避免反复更新同一图元，仅当一轮更新中最后一次调用时更新。
 
         :param master: 调用该函数的父图元。
         :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
-        :param ancestor: 本轮更新中主动更新的图元。
-        :type ancestor: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :param ancestor: 本轮更新中的顶层图元。
+        :type ancestors: set[GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem]
         '''
-        if master in self._mastersHaveNotUpdated:
-            self._mastersHaveNotUpdated.remove(master)
-        while self._mastersHaveNotUpdated:  # 保证所有相关父图元已全部更新
-            i = self._mastersHaveNotUpdated[-1]
-            if ancestor in i.ancestors:
-                return
-            self._mastersHaveNotUpdated.pop()
-        # 本轮更新完毕，向下更新
-        self._mastersHaveNotUpdated = self._masters.copy()  # 重新初始化
-        self.updateSelfPosition()              # 更新自身
-        self.updateChildrenPosition(ancestor)  # 更新子图元
+        if self.updateFromMasters(master, ancestors):
+            self.updateSelfPosition()     # 更新自身
+            for child in self._children:  # 更新子图元
+                child.updatePosition(self, ancestors)
 
     def updateSelfPosition(self):
         '''更新自身。子类可覆盖此方法。
         '''
         pass
-
-    def updateChildrenPosition(self, ancestor):
-        '''更新子图元。
-
-        :param ancestor: 本轮更新中主动更新的图元。
-        :type ancestor: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
-        '''
-        for child in self._children:
-            child.updatePosition(self, ancestor)
 
     def typePatternsFilter(self, idx, itemType):
         '''筛选可用的类型匹配。参见
@@ -131,7 +134,7 @@ class GeoGraphItem(QGraphicsItem):
             self._addFirstMaster(master)
         else:
             self._masters.append(master)
-            self._mastersHaveNotUpdated.append(master)
+            self._mastersHaveNotUpdated.add(master)
             master.addChild(self)
             # 更新祖先
             for ancestor in master.ancestors:
@@ -143,6 +146,11 @@ class GeoGraphItem(QGraphicsItem):
         '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。
         '''
         self.addMaster(master)
+
+    def children(self):
+        '''本图元的子图元。
+        '''
+        return self._children
 
     def addChild(self, child):
         '''为本图元添加子图元。

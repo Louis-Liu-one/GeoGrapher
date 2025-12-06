@@ -90,7 +90,6 @@ void GeoItem::reinitialize(bool top)
 
 void GeoItem::update()
 {
-    for (auto& i : _children) i->update();
     _updated = false;
 }
 
