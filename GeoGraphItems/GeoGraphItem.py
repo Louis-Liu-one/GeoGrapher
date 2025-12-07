@@ -1,8 +1,6 @@
 '''GeoGrapher图元基类
 '''
 
-import collections
-
 from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
 from PyQt5.QtGui import QCursor, QPen, QColor
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
@@ -89,7 +87,7 @@ class GeoGraphItem(QGraphicsItem):
 
         :param master: 调用该函数的父图元。
         :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
-        :param ancestor: 本轮更新中的顶层图元。
+        :param ancestors: 本轮更新中的顶层图元。
         :type ancestors: set[GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem]
         '''
         if self.updateFromMasters(master, ancestors):
@@ -102,21 +100,24 @@ class GeoGraphItem(QGraphicsItem):
         '''
         pass
 
-    def typePatternsFilter(self, idx, itemType):
+    def typePatternsFilter(self, patterns, idx, itemType):
         '''筛选可用的类型匹配。参见
         `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
 
+        :param patterns: 可用的所有类型匹配。
+        :type patterns: set[tuple[type]]
         :param idx: 当前匹配位置。
         :type idx: int
         :param itemType: 待匹配的类型。
         :type itemType: type
         :returns: 筛选后可用的类型匹配。
-        :rtype: list[list[type]]
+        :rtype: set[tuple[type]]
         '''
-        return [
-            typePattern for typePattern in self.typePatterns
-            if len(typePattern) >= idx
-            and issubclass(itemType, typePattern[idx])]
+        return {
+            typePattern for typePattern
+            in self.typePatterns.intersection(patterns)
+            if len(typePattern) > idx
+            and issubclass(itemType, typePattern[idx])}
 
     def masters(self):
         '''本图元的父图元。

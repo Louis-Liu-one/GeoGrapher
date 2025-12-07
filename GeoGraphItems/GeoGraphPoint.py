@@ -34,8 +34,8 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.onPath = None       # 所在路径
         self.isIntersec = False  # 是否为交点
         self.instance = GeoPoint(self.x, self.y)  # 基础图元
-        self.ancestors = {self}
-        self.typePatterns = [[GeoGraphPoint],]
+        self.ancestors = set()
+        self.typePatterns = {(GeoGraphPoint,),}
         self._label = GeoGraphPointLabel(self)  # 点标签
         self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
 
@@ -79,7 +79,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.instance = GeoPoint(self.x, self.y)
             self.addMaster(point.onPath)
         else:  # 是自由点
-            self.ancestors = {self}
+            self.ancestors = set()
 
     def paint(self, painter, option, widget=None):
         '''绘制点图元。自动对点的选中状态进行处理。

@@ -38,7 +38,7 @@ DecFloat distanceTo(PointPos p, LineArgs l)
 std::tuple<DecFloat, PointPos, DecFloat> dstfpsq(PointPos p, LineArgs l)
 {
     // 依次返回点到直线的距离（DiSTance）、点在直线上的投影坐标（FootPoint）、
-    //   以及直线方程ax + by + c = 0中的a,b两项的平方和（SQuare）
+    //   以及直线方程ax + by + c = 0中的a、b两项的平方和（SQuare）
     auto [a, b, c] = l;
     if (a == 0 and b == 0) return std::make_tuple(nandf, nanpos, nandf);
     auto [x, y] = p;
@@ -72,10 +72,11 @@ int isCounterclockwiseAngle(PointPos a, PointPos o, PointPos b)
     auto [xa, ya] = a;
     auto [xo, yo] = o;
     auto [xb, yb] = b;
+    // 利用向量积计算三点a、o、b是顺/逆时针方向
     DecFloat x1 = (xo - xa) * (yb - yo), x2 = (yo - ya) * (xb - xo);
-    if (x1 > x2) return -1;
-    else if (x1 < x2) return 1;
-    return 0;
+    if (x1 > x2) return -1;      // 逆时针，则角aob是顺时针角
+    else if (x1 < x2) return 1;  // 顺时针，则角aob是逆时针角
+    return 0;  // a、o、b三点共线，无法判断
 }
 
 PointPos intersec(LineArgs l1, LineArgs l2)
@@ -102,6 +103,7 @@ std::pair<PointPos, PointPos> intersec(
         dx = -b * q, dy = a * q;
     PointPos i1 = PointPos(hx + dx, hy + dy),
         i2 = PointPos(hx - dx, hy - dy);
+    // 严格根据文档要求确定交点编号
     int prop = isCounterclockwiseAngle(i2, i1, o);
     if (prop > 0) return std::make_pair(i1, i2);
     else if (prop < 0) return std::make_pair(i2, i1);
@@ -120,16 +122,15 @@ std::pair<PointPos, PointPos> intersec(
 {
     auto [x1, y1] = o1;
     auto [x2, y2] = o2;
-    DecFloat a = y2 - y1, b = x1 - x2, c = fma(x2, y1, -x1 * y2),
-        sq = fma(a, a, b * b), l = sqrt(sq),
-        rs = r1 + r2, rd = r1 - r2, l2 = 2 * l;
+    DecFloat a = y2 - y1, b = x1 - x2, sq = fma(a, a, b * b),
+        l = sqrt(sq), rs = r1 + r2, ak = a / l, bk = b / l;
     if (rs < l) return std::make_pair(nanpos, nanpos);
-    DecFloat l1 = (l + rs) * (l + rd) / l2 - r1, k = l1 / l,
-        x0 = x1 - k * b, y0 = y1 + k * a,
-        h = sqrt(fma(r1, r1, -l1 * l1) / sq),
-        dx = h * a, dy = h * b;
+    DecFloat l1 = (l + rs) * (l + r1 - r2) / l / 2 - r1,
+        x0 = x1 - l1 * bk, y0 = y1 + l1 * ak,
+        h = sqrt((r1 + l1) * (r1 - l1)), dx = h * ak, dy = h * bk;
     PointPos i1 = PointPos(x0 + dx, y0 + dy),
         i2 = PointPos(x0 - dx, y0 - dy);
+    // 严格根据文档要求确定交点编号
     int prop = isCounterclockwiseAngle(o1, i1, o2);
     if (prop > 0) return std::make_pair(i1, i2);
     else return std::make_pair(i2, i1);

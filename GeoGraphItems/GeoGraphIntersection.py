@@ -23,12 +23,11 @@ class GeoGraphIntersection(GeoGraphPoint):
         self.isFree = False     # 非自由点
         self.isIntersec = True  # 是交点
         self.instance = GeoIntersection()
-        self.ancestors = set()
-        self.typePatterns = [
-            [GeoGraphSegment, GeoGraphSegment],
-            [GeoGraphCircle, GeoGraphSegment],
-            [GeoGraphSegment, GeoGraphCircle],
-            [GeoGraphCircle, GeoGraphCircle],]
+        self.typePatterns = {
+            (GeoGraphSegment, GeoGraphSegment),
+            (GeoGraphCircle, GeoGraphSegment),
+            (GeoGraphSegment, GeoGraphCircle),
+            (GeoGraphCircle, GeoGraphCircle),}
 
     def _addFirstMaster(self, master):
         '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。

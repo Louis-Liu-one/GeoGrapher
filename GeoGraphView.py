@@ -59,7 +59,18 @@ class GeoGraphView(QGraphicsView):
             self._drawModeMousePress(event.pos())
 
     def _drawModeMousePress(self, pos):
-        '''当在绘制模式按下鼠标时，创建图元或添加父图元。
+        '''当在绘制模式按下鼠标时，创建图元或添加父图元。具体实现如下：
+        1. 若当前尚未创建图元，则创建；
+        2. 根据选中的图元类型筛选匹配的类型模式，类型模式存储在
+           `GeoGrapher.GeoGraphItems.GeoGraphItem.typePatterns`中；
+        3. 若未选中图元，则创建新点，筛选允许创建点的类型模式；
+           创建的点作为当前选中的图元进入后续操作；
+        4. 若类型模式匹配成功，则将当前选中的图元作为待创建图元的父图元；
+        5. 若类型模式匹配成功且当前选中图元是该类型模式的最后一个图元，
+           则当前图元创建完成，做收尾工作，为下次创建作准备；
+        6. 若类型模式全部匹配失败，此次图元创建失败，做收尾工作，为下次创建作准备。
+        图元的类型模式可以有多个，但是任一模式的全部类型不能与另一模式的开始数个类型相同，
+        以避免产生歧义。
 
         :param pos: 鼠标点击的位置，在视图坐标系下。
         :type pos: PyQt5.QtCore.QPoint
@@ -77,6 +88,7 @@ class GeoGraphView(QGraphicsView):
         # 根据选中的图元类型筛选匹配的类型模式
         self._typePatterns = \
             self._creatingItem.typePatternsFilter(
+                rawTypePatterns,
                 len(self._drawModeSelectedItems), type(selectedItem))
         createPointFlag = not self._typePatterns  # 是否需要创建新点
         # 若无匹配的类型模式
@@ -84,13 +96,15 @@ class GeoGraphView(QGraphicsView):
             # 此时需要创建一个点，筛选匹配点的类型模式
             self._typePatterns = \
                 self._creatingItem.typePatternsFilter(
+                    rawTypePatterns,
                     len(self._drawModeSelectedItems), GeoGraphPoint)
         if self._typePatterns:  # 匹配成功
             self._drawModeAddItem(                     # 添加
                 self._createPointAt(scenePos)          # 创建的新点
                 if createPointFlag else selectedItem)  # 或选中的图元为父图元
             # 若此次图元创建完成
-            if len(self._typePatterns[0]) == len(self._drawModeSelectedItems):
+            if len(list(self._typePatterns)[0]) \
+                    == len(self._drawModeSelectedItems):
                 self._creatingItem.isCreated = True
                 self._creatingItem.updateSelfPosition()
                 # 初始化，以为下次创建作准备

@@ -19,7 +19,7 @@ class GeoGraphSegment(GeoGraphPathItem):
         '''
         super().__init__()
         self.instance = GeoSegment()
-        self.typePatterns = [[GeoGraphPoint, GeoGraphPoint],]
+        self.typePatterns = {(GeoGraphPoint, GeoGraphPoint),}
 
     def rawShape(self):
         '''原始路径形状，不具有选中范围。
