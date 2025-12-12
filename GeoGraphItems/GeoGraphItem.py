@@ -187,6 +187,21 @@ class GeoGraphItem(QGraphicsItem):
         for pen in self._pens:
             pen.setWidthF(pen.widthF() / zoomChange)
 
+    def whenFinishingCreating(self, view, typePatterns):
+        '''当图元即将完成创建时调用，参见
+        `GeoGrapher.GeoGraphView.GeoGraphView._drawModeMousePress()`。
+        子类可覆盖此方法。
+
+        :param view: 图元所在视图。
+        :type view: GeoGrapher.GeoGraphView.GeoGraphView
+        :param typePatterns: 图元进行此次创建选用的类型模式。
+        :type typePatterns: set[tuple[type]]
+        :returns: 返回`True`，当图元顺利完成创建；
+            反之，当在调用此函数的过程后图元最终无法创建。
+        :rtype: bool
+        '''
+        return True
+
     def _mousePos(self):
         '''鼠标位置。
 

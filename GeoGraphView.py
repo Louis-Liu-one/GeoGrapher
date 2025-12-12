@@ -67,7 +67,8 @@ class GeoGraphView(QGraphicsView):
            创建的点作为当前选中的图元进入后续操作；
         4. 若类型模式匹配成功，则将当前选中的图元作为待创建图元的父图元；
         5. 若类型模式匹配成功且当前选中图元是该类型模式的最后一个图元，
-           则当前图元创建完成，做收尾工作，为下次创建作准备；
+           则当前图元创建完成，则调用图元的`whenFinishingCreating()`方法，
+           做收尾工作，为下次创建作准备；
         6. 若类型模式全部匹配失败，此次图元创建失败，做收尾工作，为下次创建作准备。
         图元的类型模式可以有多个，但是任一模式的全部类型不能与另一模式的开始数个类型相同，
         以避免产生歧义。
@@ -105,16 +106,21 @@ class GeoGraphView(QGraphicsView):
             # 若此次图元创建完成
             if len(list(self._typePatterns)[0]) \
                     == len(self._drawModeSelectedItems):
-                self._creatingItem.isCreated = True
-                self._creatingItem.updateSelfPosition()
-                # 初始化，以为下次创建作准备
-                self._drawModeSelectedItems = []
-                self._creatingItem = None
+                if self._creatingItem.whenFinishingCreating(
+                        self, self._typePatterns):
+                    self._creatingItem.isCreated = True
+                    self._creatingItem.updateSelfPosition()
+                    # 初始化，以为下次创建作准备
+                    self._creatingItem = None
+                self._afterCreatingItem()
         else:  # 匹配失败，此次图元创建失败，重新初始化
-            if self._creatingItem is not None:
-                self.scene().removeItem(self._creatingItem)
-                self._creatingItem = None
-            self._drawModeSelectedItems = []
+            self._afterCreatingItem()
+
+    def _afterCreatingItem(self):
+        if self._creatingItem is not None:
+            self.scene().removeItem(self._creatingItem)
+            self._creatingItem = None
+        self._drawModeSelectedItems = []
 
     def _drawModeAddItem(self, master):
         '''为当前在创建的图元添加父图元。
