@@ -230,3 +230,11 @@ class GeoGraphView(QGraphicsView):
             for item in self.scene().selectedItems():
                 if not isinstance(item, QGraphicsTextItem):
                     self.scene().removeItem(item)
+        elif event.key() == Qt.Key_V \
+                and self.mainMode == GeoMainMode.SELECT \
+                and not isinstance(
+                    self.scene().focusItem(), QGraphicsTextItem):
+            # Only for tests
+            for item in self.scene().selectedItems():
+                if not isinstance(item, QGraphicsTextItem):
+                    item.setVisible(not item.isVisible())

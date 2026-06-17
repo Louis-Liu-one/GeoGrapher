@@ -27,8 +27,8 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         self.instance = GeoItem()
         self.setParentItem(parent)
         self.pointLabelsManager = self._label = None
-        self._realx = 0.   # 实际中心横坐标
-        self._realy = 18.  # 实际中心纵坐标
+        self._realx = 15.   # 实际中心横坐标
+        self._realy = 15.  # 实际中心纵坐标
         self.setTextInteractionFlags(Qt.TextEditorInteraction)  # 可编辑的标签
         self.setDefaultTextColor(QColor(0, 0, 0))  # 字体颜色
         self.setCursor(Qt.IBeamCursor)             # 鼠标样式
