@@ -100,7 +100,7 @@ class GeoGraphScene(QGraphicsScene):
         '''添加图元。
 
         :param item: 待添加的图元。
-        :type item: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         super().addItem(item)
         item.zoomScaleChanged(self.zoomScale)
@@ -110,7 +110,7 @@ class GeoGraphScene(QGraphicsScene):
         '''删除图元。
 
         :param item: 待删除的图元。
-        :type item: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         super().removeItem(item)
         item.removeSelf()

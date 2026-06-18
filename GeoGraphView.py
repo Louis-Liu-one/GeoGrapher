@@ -3,7 +3,6 @@
 
 import collections
 
-from PyQt5.QtWidgets import QApplication, QMenu, QAction
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
@@ -126,7 +125,7 @@ class GeoGraphView(QGraphicsView):
         '''为当前在创建的图元添加父图元。
 
         :param master: 要添加的父图元。
-        :type master: GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem
+        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         # 为在创建的图元添加父图元
         self._creatingItem.addMaster(master)
@@ -140,7 +139,7 @@ class GeoGraphView(QGraphicsView):
         :param scenePos: 创建点的坐标，在场景坐标系下。
         :type scenePos: PyQt5.QtCore.QPointF
         :returns: 创建好的点。
-        :rtype: GeoGrapher.GeoItems.GeoGraphPoint.GeoGraphPoint
+        :rtype: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         '''
         # 在指定坐标附近的图元
         items = _createdItemsFilter(self.items(self.mapFromScene(scenePos)))
@@ -169,9 +168,9 @@ class GeoGraphView(QGraphicsView):
         :param scenePos: 创建交点的坐标，在场景坐标系下。
         :type scenePos: PyQt5.QtCore.QPointF
         :param items: 取前两个为交点的路径。
-        :type items: list[GeoGrapher.GeoItems.GeoGraphItem.GeoGraphItem]
+        :type items: list[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         :returns: 创建好的交点。
-        :rtype: GeoGrapher.GeoItems.GeoGraphIntersection.GeoGraphIntersection
+        :rtype: GeoGrapher.GeoGraphItems.GeoGraphIntersection.GeoGraphIntersection
         '''
         point = GeoGraphIntersection()
         point.addMaster(items[0])
@@ -212,7 +211,7 @@ class GeoGraphView(QGraphicsView):
             while q:  # 将相关图元全部还原为更新前的准备状态
                 master = q.popleft()
                 for child in master.children():
-                    q.append(child)  # 广度优先搜索
+                    q.append(child)  # 广度优先遍历
                 master.updateFromMasters()
                 master.instance.update()
             for ancestor in ancestors:

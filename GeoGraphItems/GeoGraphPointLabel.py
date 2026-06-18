@@ -19,7 +19,7 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         '''初始化点图元标签。
 
         :param parent: 待标记的点图元。
-        :type parent: GeoGrapher.GeoItems.GeoGraphPoint.GeoGraphPoint
+        :type parent: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         :param label: 标签内容。
         :type label: str
         '''

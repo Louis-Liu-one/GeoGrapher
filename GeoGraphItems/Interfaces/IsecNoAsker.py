@@ -29,8 +29,8 @@ class IsecNoAskerDialog(QDialog):
         formLayout.addRow('Intersection Number:', self._resultBox)
 
         buttonBox = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel)
+            QDialogButtonBox.Ok
+            | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 

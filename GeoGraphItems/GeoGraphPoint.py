@@ -58,7 +58,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''将给定点图元复制到自己。仅在初始化时调用。
 
         :param point: 给定的点图元。
-        :type point: GeoGrapher.GeoItems.GeoGraphPoint.GeoGraphPoint
+        :type point: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         '''
         self.setPos(point.pos())
         point.scene().removeItem(point)
