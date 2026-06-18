@@ -1,9 +1,11 @@
 
-from PyQt5.QtWidgets import QVBoxLayout, QFormLayout, QLineEdit, QDialogButtonBox
+from PyQt5.QtWidgets import QVBoxLayout, QFormLayout
+from PyQt5.QtWidgets import QLineEdit, QDialogButtonBox
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5.QtCore import Qt, QPointF
 
 __all__ = ['ItemAttributesSetterDialog']
+
 
 class ItemAttributesSetterDialog(QDialog):
     '''图元属性设置对话框。
@@ -42,12 +44,13 @@ class ItemAttributesSetterDialog(QDialog):
         layout.addWidget(buttonBox)
         self.setLayout(layout)
         self.adjustSize()
-    
+
     def _adjustPosition(self):
         '''调整对话框位置，使其出现在图元的右上方。
         '''
         if self._item and self._item.scene() and self._item.scene().views():
-            view_top_left = self._item.scene().views()[0].mapToGlobal(QPointF(0, 0).toPoint())
+            view_top_left = self._item.scene().views()[0].mapToGlobal(
+                QPointF(0, 0).toPoint())
             dlg_x = view_top_left.x() - self.width() - 15  # 调整对话框横坐标，使其出现在视图左侧
             dlg_y = view_top_left.y()
             self.move(dlg_x, dlg_y)
@@ -62,5 +65,6 @@ class ItemAttributesSetterDialog(QDialog):
             try:
                 self._item.itemAttributes[attr] = box.text()  # 更新图元属性
             except ValueError:
-                QMessageBox.warning(self, '输入错误', f'属性“{attr}”的值无效，默认跳过。', QMessageBox.Ok)
+                QMessageBox.warning(
+                    self, '输入错误', f'属性“{attr}”的值无效，默认跳过。', QMessageBox.Ok)
         super().accept()

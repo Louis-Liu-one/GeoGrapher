@@ -12,8 +12,8 @@ from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
 from .GeoGraphItems.GeoGraphVariable import GeoGraphIsecNoVar
-from .GeoGraphItems.Core import *
-from .Constants import *
+from .GeoGraphItems.Core import DecFloat, PointPos, intersec, distanceTo
+from .Constants import GeoMainMode
 
 __all__ = ['GeoGraphView']
 
@@ -170,7 +170,9 @@ class GeoGraphView(QGraphicsView):
         :param items: 取前两个为交点的路径。
         :type items: list[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         :returns: 创建好的交点。
-        :rtype: GeoGrapher.GeoGraphItems.GeoGraphIntersection.GeoGraphIntersection
+        :rtype:
+            GeoGrapher.GeoGraphItems\
+.GeoGraphIntersection.GeoGraphIntersection
         '''
         point = GeoGraphIntersection()
         point.addMaster(items[0])

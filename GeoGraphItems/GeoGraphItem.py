@@ -14,12 +14,13 @@ __all__ = ['GeoGraphItem', 'GeoGraphPathItem']
 class GeoGraphItem(QGraphicsItem):
     '''所有图元类的基类。此类不应创建实例。
     '''
+    # 图元原始默认属性，子类可在此基础上覆盖`ATTRIBUTES_INFO`以设置默认属性
     RAW_ATTRIBUTES_INFO = {
         'opacity': {
             'default': 1.0, 'min': 0.0, 'max': 1.0,
             'getter': lambda self: self.opacity(),
-            'setter': lambda self, value: self.setOpacity(value)}}  # 图元默认属性，子类可覆盖此属性以设置默认属性
-    ATTRIBUTES_INFO = RAW_ATTRIBUTES_INFO.copy()              # 图元默认属性，子类可覆盖此属性以设置默认属性
+            'setter': lambda self, value: self.setOpacity(value)}}
+    ATTRIBUTES_INFO = RAW_ATTRIBUTES_INFO.copy()  # 图元默认属性，子类可覆盖此属性以设置默认属性
 
     def __init__(self):
         '''初始化图元。
@@ -36,7 +37,8 @@ class GeoGraphItem(QGraphicsItem):
         self.isAvailable = True   # 是否可用，即是否未删除
         self.isUpdatable = False  # 是否可作为顶层结点更新
         self._noMasters = True    # 是否无祖先
-        self.itemAttributes = GeoGraphItemAttributes(self, self.ATTRIBUTES_INFO)  # 图元属性
+        self.itemAttributes = GeoGraphItemAttributes(
+            self, self.ATTRIBUTES_INFO)  # 图元属性
         self.itemAttributesSetterDialog = None  # 图元属性设置对话框
         self.setFlag(self.ItemIsSelectable)
 
@@ -76,7 +78,8 @@ class GeoGraphItem(QGraphicsItem):
         :param master: 调用该函数的父图元。
         :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param ancestors: 本轮更新中的顶层图元。
-        :type ancestors: set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
+        :type ancestors:
+            set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         '''
         if master is not None:
             ancestors = set(ancestors)
@@ -96,7 +99,8 @@ class GeoGraphItem(QGraphicsItem):
         :param master: 调用该函数的父图元。
         :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param ancestors: 本轮更新中的顶层图元。
-        :type ancestors: set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
+        :type ancestors:
+            set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         '''
         if self.updateFromMasters(master, ancestors):
             self.updateSelfPosition()     # 更新自身
@@ -227,13 +231,15 @@ class GeoGraphItem(QGraphicsItem):
         '''打开属性设置弹窗。
         '''
         self.closeDialog()
-        self.itemAttributesSetterDialog = ItemAttributesSetterDialog(self.scene().views()[0], self)
+        self.itemAttributesSetterDialog = ItemAttributesSetterDialog(
+            self.scene().views()[0], self)
         self.itemAttributesSetterDialog.show()
 
     def closeDialog(self):
         '''关闭属性设置弹窗。
         '''
-        if self.itemAttributesSetterDialog and self.itemAttributesSetterDialog.isVisible():
+        if self.itemAttributesSetterDialog \
+                and self.itemAttributesSetterDialog.isVisible():
             self.itemAttributesSetterDialog.close()
 
     def _mousePos(self):
@@ -322,7 +328,9 @@ class GeoGraphItemAttributes(dict):
         self.attributesInfo = {}
         if attributes_info is not None:
             for name, info in attributes_info.items():
-                self[name] = info['default'] if 'default' in info else info.get('getter', lambda self: '')(item)
+                self[name] = (
+                    info['default'] if 'default' in info
+                    else info.get('getter', lambda self: '')(item))
                 self.attributesInfo[name] = info.copy()
                 if 'type' not in self.attributesInfo[name]:
                     self.attributesInfo[name]['type'] = type(self[name])
@@ -337,7 +345,7 @@ class GeoGraphItemAttributes(dict):
         :returns: 图元属性值。
         '''
         return super().__getitem__(key)
-    
+
     def __setitem__(self, key, value):
         '''设置图元属性值。子类可覆盖此方法以设置特定属性值。
 
@@ -350,12 +358,19 @@ class GeoGraphItemAttributes(dict):
             try:
                 value = attrType(value)
             except (ValueError, TypeError):
-                raise ValueError(f'Invalid value for attribute "{key}": {value}')
+                raise ValueError(
+                    f"Invalid value for attribute '{key}': {value}")
             if isinstance(value, int | float):
-                if 'min' in self.attributesInfo[key] and value < self.attributesInfo[key]['min']:
-                    raise ValueError(f'Value for attribute "{key}" cannot be less than {self.attributesInfo[key]["min"]}')
-                if 'max' in self.attributesInfo[key] and value > self.attributesInfo[key]['max']:
-                    raise ValueError(f'Value for attribute "{key}" cannot be greater than {self.attributesInfo[key]["max"]}')
+                if 'min' in self.attributesInfo[key] \
+                        and value < self.attributesInfo[key]['min']:
+                    raise ValueError(
+                        f"Value for attribute '{key}' cannot be "
+                        f"less than {self.attributesInfo[key]['min']}")
+                if 'max' in self.attributesInfo[key] \
+                        and value > self.attributesInfo[key]['max']:
+                    raise ValueError(
+                        f"Value for attribute '{key}' cannot be "
+                        f"greater than {self.attributesInfo[key]['max']}")
             if 'setter' in self.attributesInfo[key]:
                 self.attributesInfo[key]['setter'](self._item, value)
         super().__setitem__(key, value)

@@ -8,7 +8,8 @@ from PyQt5.QtCore import Qt, QPointF
 
 from .GeoGraphItem import GeoGraphItem
 from .GeoGraphPointLabel import GeoGraphPointLabel
-from .Core import *
+from .Core import (
+    DecFloat, GeoPoint, GeoSegment, GeoIntersection, PointPos, footPoint)
 
 __all__ = ['GeoGraphPoint']
 
@@ -35,7 +36,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.isIntersec = False  # 是否为交点
         self.instance = GeoPoint(self.x, self.y)  # 基础图元
         self.ancestors = set()
-        self.typePatterns = {(GeoGraphPoint,),}
+        self.typePatterns = {(GeoGraphPoint,)}
         self._label = GeoGraphPointLabel(self)  # 点标签
         self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
 

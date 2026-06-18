@@ -29,7 +29,7 @@ class GeoGraphIntersection(GeoGraphPoint):
             (GeoGraphSegment, GeoGraphSegment),
             (GeoGraphCircle, GeoGraphSegment),
             (GeoGraphSegment, GeoGraphCircle),
-            (GeoGraphCircle, GeoGraphCircle),}
+            (GeoGraphCircle, GeoGraphCircle)}
 
     def _addFirstMaster(self, master):
         '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。
