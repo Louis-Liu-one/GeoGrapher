@@ -17,6 +17,41 @@ __all__ = ['GeoGraphPoint']
 class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
     '''点图元类，也是其它点图元类的基类。
     '''
+    ATTRIBUTES_INFO = {
+        **GeoGraphItem.ATTRIBUTES_INFO,
+        'pointSize': {
+            'type': float, 'title': 'Size',
+            'min': 1, 'max': 36, 'step': 1,
+            'getter': lambda self: self.pointSize(),
+            'setter': lambda self, value: self.setPointSize(value),
+        },
+        'pointDrawColor': {
+            'type': 'color', 'title': 'Draw Color',
+            'getter': lambda self: self.drawColor(),
+            'setter': lambda self, value: self.setDrawColor(value),
+        },
+        'pointFillColor': {
+            'type': 'color', 'title': 'Fill Color',
+            'getter': lambda self: self.fillColor(),
+            'setter': lambda self, value: self.setFillColor(value),
+        },
+        'pointLabel': {
+            'type': str, 'title': 'Label',
+            'getter': lambda self: self._label.toPlainText(),
+            'setter': lambda self, value: self._label.setLabel(value),
+        },
+        'pointLabelAngle': {
+            'type': 'angle', 'title': 'Point Label Angle',
+            'getter': lambda self: self._label.labelAngle(),
+            'setter': lambda self, value: self._label.setLabelAngle(value),
+        },
+        'pointLabelDistance': {
+            'type': float, 'title': 'Point Label Distance',
+            'min': 5, 'max': 100, 'step': 2,
+            'getter': lambda self: self._label.labelDistance(),
+            'setter': lambda self, value: self._label.setLabelDistance(value),
+        },
+    }
 
     def __init__(self):
         '''初始化点图元。
@@ -25,9 +60,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._penFinal = QPen(QColor(0, 0, 0), 2.)
         self._penSelected = QPen(QColor(128, 128, 128), 2.)
         self._pens = [self._penFinal, self._penSelected]
-        self.setRect(-5., -5., 10., 10.)
+        self._pointSize = 12.
+        self._drawColor = QColor(0, 0, 0)
+        self._fillColor = QColor(230, 230, 230)
+        self.setPointSize(self._pointSize)
         self.setPen(self._penFinal)
-        self.setBrush(QBrush(QColor(230, 230, 230)))
+        self.setFillColor(self._fillColor)
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
         self.isUpdatable = True
@@ -134,7 +172,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             else:
                 self.setUndefined(True)   # 设为未定义
 
-    def removeSelfFromScene(self):
+    def onRemovingSelfFromScene(self):
         '''在场景中删除时，同时在管理器中删除点图元标签。子类可覆盖此方法。
         '''
         self._label.pointLabelsManager.removeLabel(
@@ -165,3 +203,55 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self._labelZoomScaleFirstChange = False
             self._label.setLabel()  # 初始化标签
             self._label.zoomScaleChanged(zoomChange)
+
+    def pointSize(self):
+        '''返回点的大小。
+
+        :returns: 点的大小。
+        :rtype: float
+        '''
+        return self._pointSize
+
+    def setPointSize(self, size):
+        '''设置点的大小。仅在初始化时调用。
+
+        :param size: 点的大小。
+        :type size: float
+        '''
+        self._pointSize = size
+        self.setRect(-size / 2, -size / 2, size, size)
+
+    def drawColor(self):
+        '''返回点的描边颜色。
+
+        :returns: 点的描边颜色。
+        :rtype: PyQt5.QtGui.QColor
+        '''
+        return self._drawColor
+
+    def setDrawColor(self, color):
+        '''设置点的描边颜色。
+
+        :param color: 点的描边颜色。
+        :type color: PyQt5.QtGui.QColor
+        '''
+        self._drawColor = color
+        self._penFinal.setColor(color)
+        self.update()  # 更新图元以应用新的画笔颜色
+
+    def fillColor(self):
+        '''返回点的填充颜色。
+
+        :returns: 点的填充颜色。
+        :rtype: PyQt5.QtGui.QColor
+        '''
+        return self._fillColor
+
+    def setFillColor(self, color):
+        '''设置点的填充颜色。
+
+        :param color: 点的填充颜色。
+        :type color: PyQt5.QtGui.QColor
+        '''
+        self._fillColor = color
+        self.setBrush(QBrush(color))

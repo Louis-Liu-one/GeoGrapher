@@ -1,6 +1,8 @@
 '''GeoGrapher图元基类
 '''
 
+from collections.abc import MutableMapping
+
 from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
 from PyQt5.QtGui import QCursor, QPen, QColor
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
@@ -14,13 +16,14 @@ __all__ = ['GeoGraphItem', 'GeoGraphPathItem']
 class GeoGraphItem(QGraphicsItem):
     '''所有图元类的基类。此类不应创建实例。
     '''
-    # 图元原始默认属性，子类可在此基础上覆盖`ATTRIBUTES_INFO`以设置默认属性
-    RAW_ATTRIBUTES_INFO = {
+    # 图元默认属性，子类可在此基础上添加以设置默认属性
+    ATTRIBUTES_INFO = {
         'opacity': {
-            'default': 1.0, 'min': 0.0, 'max': 1.0,
+            'default': 1.0, 'min': 0.0, 'max': 1.0, 'decimals': 2,
             'getter': lambda self: self.opacity(),
-            'setter': lambda self, value: self.setOpacity(value)}}
-    ATTRIBUTES_INFO = RAW_ATTRIBUTES_INFO.copy()  # 图元默认属性，子类可覆盖此属性以设置默认属性
+            'setter': lambda self, value: self.setOpacity(value)
+        },
+    }
 
     def __init__(self):
         '''初始化图元。
@@ -108,7 +111,7 @@ class GeoGraphItem(QGraphicsItem):
                 child.updatePosition(self, ancestors)
 
     def updateSelfPosition(self):
-        '''更新自身。子类可覆盖此方法。
+        '''更新自身位置。子类可覆盖此方法。
         '''
         pass
 
@@ -180,12 +183,12 @@ class GeoGraphItem(QGraphicsItem):
     def removeSelf(self):
         '''删除自身，而不在场景中删除。
         '''
-        self.removeSelfFromScene()
+        self.onRemovingSelfFromScene()
         self.isAvailable = False
         for master in self._masters:
             master.removeChild(self)  # 从所有父图元中删除自身
 
-    def removeSelfFromScene(self):
+    def onRemovingSelfFromScene(self):
         '''在场景中删除时调用。子类可覆盖此方法。
         '''
         pass
@@ -219,23 +222,23 @@ class GeoGraphItem(QGraphicsItem):
         '''
         if change == self.ItemSelectedChange and self.isCreated:
             if value:  # 选中
-                self.openDialog()
+                self.openItemAttributesDialog()
             else:      # 取消选中
-                self.closeDialog()
+                self.closeItemAttributesDialog()
         elif change == self.ItemSceneChange:
             if value is None:
-                self.closeDialog()  # 删除图元属性设置对话框实例
+                self.closeItemAttributesDialog()  # 删除图元属性设置对话框实例
         return super().itemChange(change, value)
 
-    def openDialog(self):
+    def openItemAttributesDialog(self):
         '''打开属性设置弹窗。
         '''
-        self.closeDialog()
+        self.closeItemAttributesDialog()
         self.itemAttributesSetterDialog = ItemAttributesSetterDialog(
             self.scene().views()[0], self)
         self.itemAttributesSetterDialog.show()
 
-    def closeDialog(self):
+    def closeItemAttributesDialog(self):
         '''关闭属性设置弹窗。
         '''
         if self.itemAttributesSetterDialog \
@@ -311,69 +314,98 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         self._selectWidth /= zoomChange
 
 
-class GeoGraphItemAttributes(dict):
+class GeoGraphItemAttributes(MutableMapping):
     '''图元属性类。以字典形式存储图元属性。
     '''
+    SPECIAL_ATTRTYPES = {'angle': int, 'color': QColor}  # 特殊属性类型，需特殊处理
 
-    def __init__(self, item, attributes_info=None):
+    def __init__(self, item, attributesInfo=None):
         '''初始化图元属性。
 
         :param item: 图元实例，用于获取图元属性。
         :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
-        :param attributes_info: 图元属性信息字典。
-        :type attributes_info: dict[str, dict[str, any]]
+        :param attributesInfo: 图元属性信息字典。
+        :type attributesInfo: dict[str, dict[str, any]]
         '''
         super().__init__()
         self._item = item
-        self.attributesInfo = {}
-        if attributes_info is not None:
-            for name, info in attributes_info.items():
-                self[name] = (
-                    info['default'] if 'default' in info
-                    else info.get('getter', lambda self: '')(item))
+        self._attributes = {}     # 存储图元属性值的字典
+        self.attributesInfo = {}  # 存储图元属性信息的字典，便于后续获取属性信息
+        if attributesInfo is not None:
+            for name, info in attributesInfo.items():
+                self._attributes[name] = (
+                    info['default'] if 'default' in info else None)
                 self.attributesInfo[name] = info.copy()
                 if 'type' not in self.attributesInfo[name]:
-                    self.attributesInfo[name]['type'] = type(self[name])
+                    self.attributesInfo[name]['type'] \
+                        = type(self._attributes[name])
                 if 'title' not in self.attributesInfo[name]:
                     self.attributesInfo[name]['title'] = name.capitalize()
+                if self.attributesInfo[name]['type'] in self.SPECIAL_ATTRTYPES:
+                    self.attributesInfo[name]['pythonType'] \
+                        = self.SPECIAL_ATTRTYPES[
+                            self.attributesInfo[name]['type']]
+
+    def __len__(self):
+        '''图元属性数量。
+        '''
+        return len(self._attributes)
 
     def __getitem__(self, key):
-        '''获取图元属性值。子类可覆盖此方法以获取特定属性值。
+        '''获取图元属性值。
 
         :param key: 属性名称。
         :type key: str
         :returns: 图元属性值。
         '''
-        return super().__getitem__(key)
+        if key not in self.attributesInfo:
+            raise KeyError(f"Attribute '{key}' not found")
+        value = self._attributes[key]
+        if value is None and 'getter' in self.attributesInfo[key]:
+            value = self.attributesInfo[key]['getter'](self._item)
+            self._attributes[key] = value
+        return value
 
     def __setitem__(self, key, value):
-        '''设置图元属性值。子类可覆盖此方法以设置特定属性值。
+        '''设置图元属性值。
 
         :param key: 属性名称。
         :type key: str
         :param value: 属性值。
         '''
         if key in self.attributesInfo:
-            attrType = self.attributesInfo[key]['type']
+            attrInfo = self.attributesInfo[key]
+            attrType = attrInfo.get('pythonType', attrInfo['type'])
             try:
                 value = attrType(value)
             except (ValueError, TypeError):
                 raise ValueError(
                     f"Invalid value for attribute '{key}': {value}")
             if isinstance(value, int | float):
-                if 'min' in self.attributesInfo[key] \
-                        and value < self.attributesInfo[key]['min']:
+                if 'min' in attrInfo and value < attrInfo['min']:
                     raise ValueError(
                         f"Value for attribute '{key}' cannot be "
-                        f"less than {self.attributesInfo[key]['min']}")
-                if 'max' in self.attributesInfo[key] \
-                        and value > self.attributesInfo[key]['max']:
+                        f"less than {attrInfo['min']}")
+                if 'max' in attrInfo and value > attrInfo['max']:
                     raise ValueError(
                         f"Value for attribute '{key}' cannot be "
-                        f"greater than {self.attributesInfo[key]['max']}")
-            if 'setter' in self.attributesInfo[key]:
-                self.attributesInfo[key]['setter'](self._item, value)
-        super().__setitem__(key, value)
+                        f"greater than {attrInfo['max']}")
+            if 'setter' in attrInfo:
+                attrInfo['setter'](self._item, value)
+        self._attributes[key] = value
+
+    def __delitem__(self, key):
+        '''删除图元属性。
+        '''
+        if key in self._attributes:
+            del self._attributes[key]
+        if key in self.attributesInfo:
+            del self.attributesInfo[key]
+
+    def __iter__(self):
+        '''迭代图元属性名称。
+        '''
+        return iter(self._attributes)
 
     def getAttributesInfo(self, attr):
         '''获取图元属性信息。
