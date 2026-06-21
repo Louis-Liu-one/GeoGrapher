@@ -104,6 +104,7 @@ class GeoGraphScene(QGraphicsScene):
         '''
         super().addItem(item)
         item.zoomScaleChanged(self.zoomScale)
+        item.onAddingSelfToScene()                # 调用图元的添加回调函数
         self.itemsManager.addItem(item.instance)  # 添加基础图元
 
     def removeItem(self, item):

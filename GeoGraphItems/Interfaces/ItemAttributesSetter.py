@@ -4,6 +4,7 @@
 from PyQt5.QtWidgets import QDialog, QMessageBox, QVBoxLayout, QFormLayout
 from PyQt5.QtWidgets import (
     QLineEdit, QSpinBox, QDoubleSpinBox, QDialogButtonBox)
+from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt, QPointF
 
@@ -24,12 +25,14 @@ class ItemAttributesSetterDialog(QDialog):
         self._initUi()
         self._adjustPosition()
         self.setAttribute(Qt.WA_ShowWithoutActivating)
-        self.setWindowTitle(title.capitalize())
+        self.setWindowTitle(title)
 
     def _initUi(self):
         '''初始化界面。
         '''
         formLayout = QFormLayout()
+        formLayout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        formLayout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         # 在此添加界面元素
         self._valueGetters = {}    # 存储属性值获取函数的字典，便于后续获取当前属性值
         for attr, value in self._item.itemAttributes.items():
@@ -64,6 +67,8 @@ class ItemAttributesSetterDialog(QDialog):
                 self._valueGetters[attr] = attributeBox.text
             else:
                 continue  # 不支持的属性类型，跳过
+            attributeBox.setSizePolicy(
+                QSizePolicy.Expanding, QSizePolicy.Preferred)
             formLayout.addRow(attrInfo['title'] + ':', attributeBox)
 
         buttonBox = QDialogButtonBox(
@@ -97,6 +102,6 @@ class ItemAttributesSetterDialog(QDialog):
                     self, 'Input Error',
                     f'The value for attribute "{
                         self._item.itemAttributes.getAttributesInfo(
-                            attr)["title"]}" is invalid. Skipping.',
+                            attr)['title']}" is invalid. Skipping.',
                     QMessageBox.Ok)
         super().accept()

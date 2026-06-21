@@ -21,6 +21,17 @@ class GeoGraphSegment(GeoGraphPathItem):
         self.instance = GeoSegment()
         self.typePatterns = {(GeoGraphPoint, GeoGraphPoint)}
 
+    def __str__(self):
+        '''返回线段图元的标识字符串。
+        '''
+        return f'Segment {self.shortIdentifier()}'
+
+    def shortIdentifier(self):
+        '''返回线段图元的简短标识字符串。
+        '''
+        return f'{self._masters[0].shortIdentifier()
+                  }-{self._masters[1].shortIdentifier()}'
+
     def rawShape(self):
         '''原始路径形状，不具有选中范围。
         '''

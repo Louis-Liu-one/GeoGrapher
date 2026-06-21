@@ -11,7 +11,9 @@ from .GeoGraphItems.GeoGraphItem import GeoGraphPathItem
 from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
-from .GeoGraphItems.GeoGraphVariable import GeoGraphIsecNoVar
+from .GeoGraphItems.GeoGraphVariable import GeoGraphVariable, GeoGraphIsecNoVar
+from .GeoGraphItems.Interfaces.ItemAttributesSetter import \
+    ItemAttributesSetterDialog
 from .GeoGraphItems.Core import DecFloat, PointPos, intersec, distanceTo
 from .Constants import GeoMainMode
 
@@ -48,6 +50,8 @@ class GeoGraphView(QGraphicsView):
         self._drawModeSelectedItems = []  # 当前选择过的图元
         self._typePatterns = []           # 根据次模式决定图元的类型匹配
         self._creatingItem = None         # 当前正在创建的图元
+        self._itemWithCurrentAttributesDialog = None  # 当前正在设置属性的图元
+        self._itemAttributesSetterDialog = None       # 当前的图元属性设置对话框
 
     def mousePressEvent(self, event):
         '''按下鼠标时，若主模式为绘制模式，则创建图元或添加父图元。
@@ -65,10 +69,11 @@ class GeoGraphView(QGraphicsView):
         3. 若未选中图元，则创建新点，筛选允许创建点的类型模式；
            创建的点作为当前选中的图元进入后续操作；
         4. 若类型模式匹配成功，则将当前选中的图元作为待创建图元的父图元；
-        5. 若类型模式匹配成功且当前选中图元是该类型模式的最后一个图元，
-           则当前图元创建完成，则调用图元的`whenFinishingCreating()`方法，
-           做收尾工作，为下次创建作准备；
-        6. 若类型模式全部匹配失败，此次图元创建失败，做收尾工作，为下次创建作准备。
+        5. 重复判断当前正在创建的图元是否需要输入变量值，不断匹配类型模式，
+           直到不再需要输入变量值或输入失败；
+        6. 若类型模式匹配成功且当前选中图元是该类型模式的最后一个图元，
+           则当前图元创建完成，做收尾工作，为下次创建作准备；
+        7. 若类型模式全部匹配失败，此次图元创建失败，做收尾工作，为下次创建作准备。
         图元的类型模式可以有多个，但是任一模式的全部类型不能与另一模式的开始数个类型相同，
         以避免产生歧义。
 
@@ -102,20 +107,58 @@ class GeoGraphView(QGraphicsView):
             self._drawModeAddItem(                     # 添加
                 self._createPointAt(scenePos)          # 创建的新点
                 if createPointFlag else selectedItem)  # 或选中的图元为父图元
+            # 重复检查变量输入要求，直到不再需要输入变量值或输入失败
+            if not self._repeatCheckingVarInputRequirement():
+                self._afterCreatingItem()
+                return
             # 若此次图元创建完成
             if len(list(self._typePatterns)[0]) \
                     == len(self._drawModeSelectedItems):
-                if self._creatingItem.whenFinishingCreating(
-                        self, self._typePatterns):
-                    self._creatingItem.isCreated = True
-                    self._creatingItem.updateSelfPosition()
-                    # 初始化，以为下次创建作准备
-                    self._creatingItem = None
+                self._creatingItem.isCreated = True
+                self._creatingItem.updateSelfPosition()
+                # 初始化，以为下次创建作准备
+                self._creatingItem = None
                 self._afterCreatingItem()
         else:  # 匹配失败，此次图元创建失败，重新初始化
             self._afterCreatingItem()
 
+    def _repeatCheckingVarInputRequirement(self):
+        '''重复检查变量输入要求。用于在一次创建过程中需要输入多个变量值的情况。
+        '''
+        while True:
+            status, continueChecking = self._checkVarInputRequirement()
+            if not status:  # 变量输入失败，创建失败，做收尾工作
+                return False
+            if not continueChecking:  # 不需要继续检查，结束
+                return True
+
+    def _checkVarInputRequirement(self):
+        '''检查当前正在创建的图元是否需要输入变量值。
+        '''
+        if len(list(self._typePatterns)[0]) \
+                == len(self._drawModeSelectedItems):
+            return True, False
+        rawTypePatterns = self._typePatterns.copy()
+        varTypePatterns = self._creatingItem.typePatternsFilter(
+            rawTypePatterns, len(self._drawModeSelectedItems),
+            GeoGraphVariable, loose=True)
+        if varTypePatterns:
+            varType = next(iter(varTypePatterns))[
+                len(self._drawModeSelectedItems)]
+            self._typePatterns = self._creatingItem.typePatternsFilter(
+                varTypePatterns, len(self._drawModeSelectedItems), varType)
+            varObject = varType()
+            status = varObject.askValueFromUser(self)
+            if status:
+                self._drawModeAddItem(varObject)  # 添加变量图元
+                return True, True
+            else:
+                return False, None
+        return True, False  # 不需要输入变量值
+
     def _afterCreatingItem(self):
+        '''完成创建后进行的收尾工作。包括：删除未完成创建的图元，清空选择过的图元列表。
+        '''
         if self._creatingItem is not None:
             self.scene().removeItem(self._creatingItem)
             self._creatingItem = None
@@ -239,3 +282,29 @@ class GeoGraphView(QGraphicsView):
             for item in self.scene().selectedItems():
                 if not isinstance(item, QGraphicsTextItem):
                     item.setVisible(not item.isVisible())
+
+    def openItemAttributesDialog(self, item):
+        '''打开图元属性设置对话框。
+
+        :param item: 待设置属性的图元。
+        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
+        '''
+        self.closeItemAttributesDialog()
+        self._itemWithCurrentAttributesDialog = item
+        title = f'Set Attributes for {item}'  # 对话框标题
+        self._itemAttributesSetterDialog = ItemAttributesSetterDialog(
+            self.scene().views()[0], item, title=title)
+        self._itemAttributesSetterDialog.show()
+
+    def closeItemAttributesDialog(self, item=None):
+        '''关闭图元属性设置对话框。
+
+        :param item: 待关闭属性设置对话框的图元。默认为`None`，即关闭当前正在设置属性的图元的属性设置对话框。
+        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem | None
+        '''
+        if item is None or item == self._itemWithCurrentAttributesDialog:
+            if self._itemWithCurrentAttributesDialog:
+                self._itemWithCurrentAttributesDialog = None
+            if self._itemAttributesSetterDialog:
+                self._itemAttributesSetterDialog.close()
+                self._itemAttributesSetterDialog = None

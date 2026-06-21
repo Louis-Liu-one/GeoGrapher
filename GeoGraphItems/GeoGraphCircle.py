@@ -22,6 +22,16 @@ class GeoGraphCircle(GeoGraphPathItem):
         self.instance = GeoCircle()
         self.typePatterns = {(GeoGraphPoint, GeoGraphPoint)}
 
+    def __str__(self):
+        '''返回圆图元的标识字符串。
+        '''
+        return f'Circle {self.shortIdentifier()}'
+
+    def shortIdentifier(self):
+        '''返回圆图元的简短标识字符串。
+        '''
+        return self._masters[0].shortIdentifier()
+
     def rawShape(self):
         '''原始路径形状，不具有选中范围。
         圆图元的路径形状仅包含圆周附近，而不包含圆内。

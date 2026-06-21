@@ -57,12 +57,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''初始化点图元。
         '''
         super().__init__()
-        self._penFinal = QPen(QColor(0, 0, 0), 2.)
-        self._penSelected = QPen(QColor(128, 128, 128), 2.)
+        self._penFinal = QPen(QColor('#000000'), 2.)
+        self._penSelected = QPen(QColor('#808080'), 2.)
         self._pens = [self._penFinal, self._penSelected]
         self._pointSize = 12.
-        self._drawColor = QColor(0, 0, 0)
-        self._fillColor = QColor(230, 230, 230)
+        self._drawColor = QColor('#000000')
+        self._fillColor = QColor('#e6e6e6')
         self.setPointSize(self._pointSize)
         self.setPen(self._penFinal)
         self.setFillColor(self._fillColor)
@@ -76,7 +76,16 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.ancestors = set()
         self.typePatterns = {(GeoGraphPoint,)}
         self._label = GeoGraphPointLabel(self)  # 点标签
-        self._labelZoomScaleFirstChange = True  # 点标签是否未与场景缩放比例同步
+
+    def __str__(self):
+        '''返回点图元的标识字符串。
+        '''
+        return f'Point {self._label.toPlainText()}'
+
+    def shortIdentifier(self):
+        '''返回点图元的简短标识字符串。
+        '''
+        return self._label.toPlainText()
 
     def _addFirstMaster(self, master):
         '''为本图元添加第一个父图元。
@@ -172,6 +181,11 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             else:
                 self.setUndefined(True)   # 设为未定义
 
+    def onAddingSelfToScene(self):
+        '''在场景中添加的同时初始化标签。子类可覆盖此方法。
+        '''
+        self._label.setLabel()  # 初始化标签
+
     def onRemovingSelfFromScene(self):
         '''在场景中删除时，同时在管理器中删除点图元标签。子类可覆盖此方法。
         '''
@@ -186,23 +200,6 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
                 and change == self.ItemPositionChange:
             return self._newPosition(value)
         return super().itemChange(change, value)
-
-    def zoomScaleChanged(self, zoomChange):
-        '''视图放缩比例改变时更新点的大小以适应放缩比例。
-
-        :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
-        :type zoomChange: float
-        '''
-        super().zoomScaleChanged(zoomChange)
-        rect = self.rect()
-        rect.setWidth(self.rect().width() / zoomChange)
-        rect.setHeight(self.rect().height() / zoomChange)  # 更新大小
-        rect.moveCenter(QPointF(0., 0.))                   # 更新位置
-        self.setRect(rect)
-        if self._labelZoomScaleFirstChange:  # 当初次调用时将标签缩放比例与场景同步
-            self._labelZoomScaleFirstChange = False
-            self._label.setLabel()  # 初始化标签
-            self._label.zoomScaleChanged(zoomChange)
 
     def pointSize(self):
         '''返回点的大小。

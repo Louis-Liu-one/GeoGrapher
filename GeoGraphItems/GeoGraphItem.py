@@ -8,9 +8,7 @@ from PyQt5.QtGui import QCursor, QPen, QColor
 from PyQt5.QtGui import QPainterPath, QPainterPathStroker
 from PyQt5.QtCore import Qt
 
-from .Interfaces.ItemAttributesSetter import ItemAttributesSetterDialog
-
-__all__ = ['GeoGraphItem', 'GeoGraphPathItem']
+__all__ = ['GeoGraphItem', 'GeoGraphPathItem', 'GeoGraphItemAttributes']
 
 
 class GeoGraphItem(QGraphicsItem):
@@ -44,6 +42,11 @@ class GeoGraphItem(QGraphicsItem):
             self, self.ATTRIBUTES_INFO)  # 图元属性
         self.itemAttributesSetterDialog = None  # 图元属性设置对话框
         self.setFlag(self.ItemIsSelectable)
+
+    def shortIdentifier(self):
+        '''返回图元的简短标识字符串。子类可覆盖此方法以提供更具体的标识字符串。
+        '''
+        return f'Item {id(self)}'
 
     def update(self):
         '''视图调用时检查是否可用。
@@ -115,7 +118,7 @@ class GeoGraphItem(QGraphicsItem):
         '''
         pass
 
-    def typePatternsFilter(self, patterns, idx, itemType):
+    def typePatternsFilter(self, patterns, idx, itemType, loose=False):
         '''筛选可用的类型匹配。参见
         `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
 
@@ -125,6 +128,8 @@ class GeoGraphItem(QGraphicsItem):
         :type idx: int
         :param itemType: 待匹配的类型。
         :type itemType: type
+        :param loose: 是否宽松匹配，即待匹配类型是否可为类型匹配中对应位置的子类。
+        :type loose: bool
         :returns: 筛选后可用的类型匹配。
         :rtype: set[tuple[type]]
         '''
@@ -132,7 +137,8 @@ class GeoGraphItem(QGraphicsItem):
             typePattern for typePattern
             in self.typePatterns.intersection(patterns)
             if len(typePattern) > idx
-            and issubclass(itemType, typePattern[idx])}
+            and (issubclass(typePattern[idx], itemType)
+                 if loose else issubclass(itemType, typePattern[idx]))}
 
     def masters(self):
         '''本图元的父图元。
@@ -188,34 +194,23 @@ class GeoGraphItem(QGraphicsItem):
         for master in self._masters:
             master.removeChild(self)  # 从所有父图元中删除自身
 
+    def onAddingSelfToScene(self):
+        '''在场景中添加时调用。子类可覆盖此方法。
+        '''
+        pass
+
     def onRemovingSelfFromScene(self):
         '''在场景中删除时调用。子类可覆盖此方法。
         '''
         pass
 
     def zoomScaleChanged(self, zoomChange):
-        '''当视图放缩比例改变时设置画笔宽度以适应放缩比例。
+        '''当视图放缩比例改变时调用。子类可覆盖此方法。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
         :type zoomChange: float
         '''
-        for pen in self._pens:
-            pen.setWidthF(pen.widthF() / zoomChange)
-
-    def whenFinishingCreating(self, view, typePatterns):
-        '''当图元即将完成创建时调用，参见
-        `GeoGrapher.GeoGraphView.GeoGraphView._drawModeMousePress()`。
-        子类可覆盖此方法。
-
-        :param view: 图元所在视图。
-        :type view: GeoGrapher.GeoGraphView.GeoGraphView
-        :param typePatterns: 图元进行此次创建选用的类型模式。
-        :type typePatterns: set[tuple[type]]
-        :returns: 返回`True`，当图元顺利完成创建；
-            反之，当在调用此函数的过程后图元最终无法创建。
-        :rtype: bool
-        '''
-        return True
+        pass
 
     def itemChange(self, change, value):
         '''图元状态改变时调用。子类可覆盖此方法以处理特定状态改变。
@@ -233,17 +228,12 @@ class GeoGraphItem(QGraphicsItem):
     def openItemAttributesDialog(self):
         '''打开属性设置弹窗。
         '''
-        self.closeItemAttributesDialog()
-        self.itemAttributesSetterDialog = ItemAttributesSetterDialog(
-            self.scene().views()[0], self)
-        self.itemAttributesSetterDialog.show()
+        self.scene().views()[0].openItemAttributesDialog(self)
 
     def closeItemAttributesDialog(self):
         '''关闭属性设置弹窗。
         '''
-        if self.itemAttributesSetterDialog \
-                and self.itemAttributesSetterDialog.isVisible():
-            self.itemAttributesSetterDialog.close()
+        self.scene().views()[0].closeItemAttributesDialog(self)
 
     def _mousePos(self):
         '''鼠标位置。
@@ -305,7 +295,7 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         painter.drawPath(self.rawShape())
 
     def zoomScaleChanged(self, zoomChange):
-        '''当视图放缩比例改变时更新画笔宽度和选中宽度。
+        '''当视图放缩比例改变时更新选中宽度。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
         :type zoomChange: float

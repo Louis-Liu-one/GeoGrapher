@@ -69,7 +69,7 @@ class ColorSelector(QWidget):
         '''初始化选择器。
         '''
         super().__init__(parent)
-        self._color = QColor(255, 255, 255)  # 默认白色
+        self._color = QColor('#ffffff')  # 默认白色
         self._dialogTitle = dialogTitle
         self._initUi(buttonText=buttonText)
 

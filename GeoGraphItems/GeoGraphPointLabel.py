@@ -1,7 +1,7 @@
 '''GeoGrapher点图元的标签
 '''
 
-from math import radians, cos, sin
+import math
 
 from PyQt5.QtWidgets import QGraphicsTextItem
 from PyQt5.QtGui import QFont, QColor
@@ -33,22 +33,12 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         self._labelAngle = -45     # 标签相对于点图元的角度
         self.setLabelDistance(self._labelDistance)  # 根据距离和角度设置标签位置
         self.setTextInteractionFlags(Qt.TextEditorInteraction)  # 可编辑的标签
-        self.setDefaultTextColor(QColor(0, 0, 0))  # 字体颜色
+        self.setDefaultTextColor(QColor('#000000'))  # 字体颜色
         self.setCursor(Qt.IBeamCursor)             # 鼠标样式
         self.setFlag(self.ItemStacksBehindParent)  # 标签位于点图元下方
         font = QFont()
         font.setPointSizeF(18.)  # 初始字号
         self.setFont(font)
-
-    def zoomScaleChanged(self, zoomChange):
-        '''当视图放缩比例改变时更新字体大小和与点图元的相对位置。
-        '''
-        super().zoomScaleChanged(zoomChange)
-        self.setLabelDistance(self._labelDistance / zoomChange)  # 更新与点图元的相对位置
-        font = self.font()
-        font.setPointSizeF(font.pointSizeF() / zoomChange)
-        self.setFont(font)
-        self._updatePos()
 
     def setLabel(self, label=None):
         '''设置标签。
@@ -74,9 +64,9 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         '''设置标签与点图元的距离。
         '''
         self._labelDistance = distance
-        angle = radians(self._labelAngle)
-        self._realx = distance * cos(angle)
-        self._realy = -distance * sin(angle)
+        angle = math.radians(self._labelAngle)
+        self._realx = distance * math.cos(angle)
+        self._realy = -distance * math.sin(angle)
         self._updatePos()
 
     def labelAngle(self):
@@ -88,9 +78,9 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         '''设置标签相对于点图元的角度。
         '''
         self._labelAngle = int(angle)
-        angle = radians(angle)
-        self._realx = self._labelDistance * cos(angle)
-        self._realy = -self._labelDistance * sin(angle)
+        angle = math.radians(angle)
+        self._realx = self._labelDistance * math.cos(angle)
+        self._realy = -self._labelDistance * math.sin(angle)
         self._updatePos()
 
     def _updatePos(self):
