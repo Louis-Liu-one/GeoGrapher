@@ -1,6 +1,16 @@
 '''GeoGrapher绘制视图
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtCore import QPoint, QPointF
+    from .Constants import GeoSecondaryMode
+    from .GeoGraphScene import GeoGraphScene
+    from .GeoGraphItems.GeoGraphItem import GeoGraphItem
+
 import collections
 
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem
@@ -33,25 +43,27 @@ def _createdItemsFilter(items):
 
 
 class GeoGraphView(QGraphicsView):
-    '''GeoGrapher绘制视图。结合`GeoGrapher.GeoGridGraphScene`使用。
+    '''GeoGrapher绘制视图。结合`GeoGrapher.GeoGraphScene`使用。
     使用方法与`PyQt5.QtWidgets.QGraphicsView`相同。
     '''
 
-    def __init__(self, scene, parent=None):
+    def __init__(self, scene: GeoGraphScene, parent: QWidget | None = None):
         '''创建视图。参数与`PyQt5.QGraphicsView`相同。
         '''
         super().__init__(scene, parent)
         self.setDragMode(self.RubberBandDrag)
         self.setRenderHints(QPainter.HighQualityAntialiasing)
         self.setMouseTracking(True)
-        self.mainMode = GeoMainMode.SELECT  # 主模式，默认为选择模式
-        self.secondaryMode = None           # 次模式
+        self.mainMode: GeoMainMode = GeoMainMode.SELECT  # 主模式，默认为选择模式
+        self.secondaryMode: GeoSecondaryMode = None      # 次模式
         # 下列属性在绘制模式创建图元时使用
-        self._drawModeSelectedItems = []  # 当前选择过的图元
-        self._typePatterns = []           # 根据次模式决定图元的类型匹配
-        self._creatingItem = None         # 当前正在创建的图元
-        self._itemWithCurrentAttributesDialog = None  # 当前正在设置属性的图元
-        self._itemAttributesSetterDialog = None       # 当前的图元属性设置对话框
+        self._drawModeSelectedItems: list[GeoGraphItem] = []  # 当前选择过的图元
+        self._typePatterns: list[tuple[type]] = []            # 根据次模式决定图元的类型匹配
+        self._creatingItem: GeoGraphItem = None               # 当前正在创建的图元
+        self._itemWithCurrentAttributesDialog: \
+            GeoGraphItem = None                # 当前正在设置属性的图元
+        self._itemAttributesSetterDialog: \
+            ItemAttributesSetterDialog = None  # 当前的图元属性设置对话框
 
     def mousePressEvent(self, event):
         '''按下鼠标时，若主模式为绘制模式，则创建图元或添加父图元。
@@ -61,7 +73,7 @@ class GeoGraphView(QGraphicsView):
                 and self.mainMode == GeoMainMode.DRAW:
             self._drawModeMousePress(event.pos())
 
-    def _drawModeMousePress(self, pos):
+    def _drawModeMousePress(self, pos: QPoint):
         '''当在绘制模式按下鼠标时，创建图元或添加父图元。具体实现如下：
         1. 若当前尚未创建图元，则创建；
         2. 根据选中的图元类型筛选匹配的类型模式，类型模式存储在
@@ -85,7 +97,7 @@ class GeoGraphView(QGraphicsView):
         # 从未选择过图元，表明此次点击是第一次，要创建新图元
         if not self._drawModeSelectedItems:
             # 创建图元
-            self._creatingItem = self.secondaryMode.value()
+            self._creatingItem: GeoGraphItem = self.secondaryMode.value()
             self.scene().addItem(self._creatingItem)
             # 初始化图元的类型匹配
             self._typePatterns = self._creatingItem.typePatterns.copy()
@@ -122,7 +134,7 @@ class GeoGraphView(QGraphicsView):
         else:  # 匹配失败，此次图元创建失败，重新初始化
             self._afterCreatingItem()
 
-    def _repeatCheckingVarInputRequirement(self):
+    def _repeatCheckingVarInputRequirement(self) -> bool:
         '''重复检查变量输入要求。用于在一次创建过程中需要输入多个变量值的情况。
         '''
         while True:
@@ -132,7 +144,7 @@ class GeoGraphView(QGraphicsView):
             if not continueChecking:  # 不需要继续检查，结束
                 return True
 
-    def _checkVarInputRequirement(self):
+    def _checkVarInputRequirement(self) -> tuple[bool, bool]:
         '''检查当前正在创建的图元是否需要输入变量值。
         '''
         if len(list(self._typePatterns)[0]) \
@@ -164,7 +176,7 @@ class GeoGraphView(QGraphicsView):
             self._creatingItem = None
         self._drawModeSelectedItems = []
 
-    def _drawModeAddItem(self, master):
+    def _drawModeAddItem(self, master: GeoGraphItem):
         '''为当前在创建的图元添加父图元。
 
         :param master: 要添加的父图元。
@@ -175,7 +187,7 @@ class GeoGraphView(QGraphicsView):
         # 添加至选择过的图元列表
         self._drawModeSelectedItems.append(master)
 
-    def _createPointAt(self, scenePos):
+    def _createPointAt(self, scenePos: QPointF) -> GeoGraphPoint:
         '''在指定坐标处创建一个点。
         自动判断该点是否为自由点、一路径上的点或两路径的交点。
 
@@ -204,7 +216,9 @@ class GeoGraphView(QGraphicsView):
         point.updateSelfPosition()  # 更新点坐标
         return point
 
-    def _createIntersecWithItems(self, scenePos, items):
+    def _createIntersecWithItems(
+            self, scenePos: QPointF,
+            items: list[GeoGraphItem]) -> GeoGraphIntersection:
         '''以指定图元为路径在指定坐标处创建一个交点。
         自动判断该点的交点编号，使得该点距离指定坐标较近。
 
@@ -283,7 +297,7 @@ class GeoGraphView(QGraphicsView):
                 if not isinstance(item, QGraphicsTextItem):
                     item.setVisible(not item.isVisible())
 
-    def openItemAttributesDialog(self, item):
+    def openItemAttributesDialog(self, item: GeoGraphItem):
         '''打开图元属性设置对话框。
 
         :param item: 待设置属性的图元。
@@ -296,7 +310,7 @@ class GeoGraphView(QGraphicsView):
             self.scene().views()[0], item, title=title)
         self._itemAttributesSetterDialog.show()
 
-    def closeItemAttributesDialog(self, item=None):
+    def closeItemAttributesDialog(self, item: GeoGraphItem | None = None):
         '''关闭图元属性设置对话框。
 
         :param item: 待关闭属性设置对话框的图元。默认为`None`，即关闭当前正在设置属性的图元的属性设置对话框。

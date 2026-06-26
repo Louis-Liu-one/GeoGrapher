@@ -17,30 +17,30 @@ class IntValueSliderSelector(QWidget):
         '''初始化选择器。
         '''
         super().__init__(parent)
-        self._slider = QSlider(Qt.Horizontal)
-        self._spin = QSpinBox()
+        self._slider: QSlider = QSlider(Qt.Horizontal)
+        self._spin: QSpinBox = QSpinBox()
         self.setValue = self._spin.setValue
         self.value = self._spin.value
 
-        lay = QVBoxLayout(self)
-        lay.addWidget(self._slider)
-        lay.addWidget(self._spin)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self._slider)
+        layout.addWidget(self._spin)
         self._slider.valueChanged.connect(self._onSliderValueChanged)
         self._spin.valueChanged.connect(self._onSpinValueChanged)
 
-    def setRange(self, minVal, maxVal):
+    def setRange(self, minVal: int, maxVal: int):
         '''设置选择器的取值范围。
         '''
         self._slider.setRange(int(minVal), int(maxVal))
         self._spin.setRange(int(minVal), int(maxVal))
 
-    def setMinimum(self, minVal):
+    def setMinimum(self, minVal: int):
         '''设置选择器的最小值。
         '''
         self._slider.setMinimum(int(minVal))
         self._spin.setMinimum(int(minVal))
 
-    def setMaximum(self, maxVal):
+    def setMaximum(self, maxVal: int):
         '''设置选择器的最大值。
         '''
         self._slider.setMaximum(int(maxVal))
@@ -65,15 +65,16 @@ class ColorSelector(QWidget):
 
     def __init__(
             self, parent=None,
-            buttonText='Choose Color', dialogTitle='Choose Color'):
+            buttonText: str = 'Choose Color',
+            dialogTitle: str = 'Choose Color'):
         '''初始化选择器。
         '''
         super().__init__(parent)
-        self._color = QColor('#ffffff')  # 默认白色
-        self._dialogTitle = dialogTitle
+        self._color: QColor = QColor('#ffffff')  # 默认白色
+        self._dialogTitle: str = dialogTitle
         self._initUi(buttonText=buttonText)
 
-    def _initUi(self, buttonText='Choose Color'):
+    def _initUi(self, buttonText: str = 'Choose Color'):
         '''初始化界面。
         '''
         layout = QHBoxLayout(self)
@@ -81,13 +82,14 @@ class ColorSelector(QWidget):
         layout.setSpacing(6)
 
         # 颜色预览色块
-        self._colorDisplayFrame = QFrame()
+        self._colorDisplayFrame: QFrame = QFrame()
         self._colorDisplayFrame.setFixedSize(32, 24)
         self._colorDisplayFrame.setFrameShape(QFrame.Box)
         self._updateFrameBackground()
 
         # 打开颜色选择器按钮
-        self._colorPickerButton = QPushButton(buttonText.capitalize())
+        self._colorPickerButton: QPushButton = QPushButton(
+            buttonText.capitalize())
         self._colorPickerButton.clicked.connect(self._openColorPickerDialog)
 
         layout.addWidget(self._colorDisplayFrame)
@@ -108,7 +110,7 @@ class ColorSelector(QWidget):
             self._color = new_color
             self._updateFrameBackground()
 
-    def value(self):
+    def value(self) -> QColor:
         '''返回当前选择的颜色。
 
         :returns: 当前选择的颜色。
@@ -116,7 +118,7 @@ class ColorSelector(QWidget):
         '''
         return self._color
 
-    def setValue(self, color):
+    def setValue(self, color: QColor):
         '''设置颜色。
 
         :param color: 要设置的颜色。

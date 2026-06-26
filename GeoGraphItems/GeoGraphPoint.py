@@ -1,8 +1,14 @@
 '''GeoGrapher点图元
 '''
 
-from PyQt5.QtWidgets import QStyle, QApplication
-from PyQt5.QtWidgets import QGraphicsEllipseItem
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from PyQt5.QtWidgets import QGraphicsItem
+    from .GeoGraphItem import GeoGraphPathItem
+
+from PyQt5.QtWidgets import QStyle, QApplication, QGraphicsEllipseItem
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPointF
 
@@ -68,16 +74,16 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.setFillColor(self._fillColor)
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
-        self.isUpdatable = True
-        self.isFree = True       # 是否为自由点
-        self.onPath = None       # 所在路径
-        self.isIntersec = False  # 是否为交点
-        self.instance = GeoPoint(self.x, self.y)  # 基础图元
+        self.isUpdatable: bool = True
+        self.isFree: bool = True                     # 是否为自由点
+        self.onPath: GeoGraphPathItem | None = None  # 所在路径
+        self.isIntersec: bool = False                # 是否为交点
+        self.instance = GeoPoint(self.x, self.y)     # 基础图元
         self.ancestors = set()
         self.typePatterns = {(GeoGraphPoint,)}
         self._label = GeoGraphPointLabel(self)  # 点标签
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''返回点图元的标识字符串。
         '''
         return f'Point {self._label.toPlainText()}'
@@ -87,7 +93,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         return self._label.toPlainText()
 
-    def _addFirstMaster(self, master):
+    def _addFirstMaster(self, master: GeoGraphItem):
         '''为本图元添加第一个父图元。
         '''
         if isinstance(master, GeoGraphPoint):
@@ -102,7 +108,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.setPos(self._newPosition(master._mousePos()))
         self._mastersHaveNotUpdated = set(self._masters)
 
-    def _copyPointToSelf(self, point):
+    def _copyPointToSelf(self, point: GeoGraphPoint):
         '''将给定点图元复制到自己。仅在初始化时调用。
 
         :param point: 给定的点图元。
@@ -141,7 +147,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._checkAvailable()
         super().paint(painter, option, widget)
 
-    def _newPosition(self, pos):
+    def _newPosition(self, pos: QPointF) -> QPointF:
         '''根据鼠标移动返回点位置。
         若点在路径上，则返回鼠标位置在路径上的投影坐标；
         若点为自由点，则返回网格吸附后的坐标。
@@ -192,7 +198,9 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._label.pointLabelsManager.removeLabel(
             self._label.toPlainText())
 
-    def itemChange(self, change, value):
+    def itemChange(
+            self, change: QGraphicsItem.GraphicsItemChange,
+            value: Any) -> Any:
         '''移动点时调用。参见`self._newPosition()`。
         '''
         if self.scene() \
@@ -201,7 +209,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             return self._newPosition(value)
         return super().itemChange(change, value)
 
-    def pointSize(self):
+    def pointSize(self) -> float:
         '''返回点的大小。
 
         :returns: 点的大小。
@@ -209,7 +217,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         return self._pointSize
 
-    def setPointSize(self, size):
+    def setPointSize(self, size: float):
         '''设置点的大小。仅在初始化时调用。
 
         :param size: 点的大小。
@@ -218,7 +226,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._pointSize = size
         self.setRect(-size / 2, -size / 2, size, size)
 
-    def drawColor(self):
+    def drawColor(self) -> QColor:
         '''返回点的描边颜色。
 
         :returns: 点的描边颜色。
@@ -226,7 +234,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         return self._drawColor
 
-    def setDrawColor(self, color):
+    def setDrawColor(self, color: QColor):
         '''设置点的描边颜色。
 
         :param color: 点的描边颜色。
@@ -236,7 +244,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._penFinal.setColor(color)
         self.update()  # 更新图元以应用新的画笔颜色
 
-    def fillColor(self):
+    def fillColor(self) -> QColor:
         '''返回点的填充颜色。
 
         :returns: 点的填充颜色。
@@ -244,7 +252,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         return self._fillColor
 
-    def setFillColor(self, color):
+    def setFillColor(self, color: QColor):
         '''设置点的填充颜色。
 
         :param color: 点的填充颜色。

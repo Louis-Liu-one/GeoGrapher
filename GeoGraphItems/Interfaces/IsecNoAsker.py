@@ -12,7 +12,7 @@ class IsecNoAskerDialog(QDialog):
     '''用于询问交点编号的应用程序模态对话框。
     '''
 
-    def __init__(self, parent=None, title=''):
+    def __init__(self, parent=None, title: str = ''):
         '''初始化对话框。
         '''
         super().__init__(parent)
@@ -38,7 +38,7 @@ class IsecNoAskerDialog(QDialog):
         layout.addWidget(buttonBox)
         self.setLayout(layout)
 
-    def result(self):
+    def result(self) -> int:
         '''获取交点编号的值。
         '''
         return self._resultBox.value()

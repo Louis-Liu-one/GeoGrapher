@@ -20,9 +20,9 @@ class GeoGraphIntersection(GeoGraphPoint):
         super().__init__()
         self.setFlag(self.ItemIsMovable, False)
         self.setFlag(self.ItemSendsGeometryChanges, False)
-        self.isUpdatable = False
-        self.isFree = False     # 非自由点
-        self.isIntersec = True  # 是交点
+        self.isUpdatable: bool = False
+        self.isFree: bool = False     # 非自由点
+        self.isIntersec: bool = True  # 是交点
         self.instance = GeoIntersection()
         self.typePatterns = {
             (GeoGraphSegment, GeoGraphSegment),

@@ -1,6 +1,13 @@
 '''GeoGrapher图元基类
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Iterator
+
+if TYPE_CHECKING:
+    from PyQt5.QtCore import QPointF
+    from .Interfaces.ItemAttributesSetter import ItemAttributesSetterDialog
+
 from collections.abc import MutableMapping
 
 from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
@@ -27,23 +34,25 @@ class GeoGraphItem(QGraphicsItem):
         '''初始化图元。
         '''
         super().__init__()
-        self._masters = []      # 父图元
-        self._children = set()  # 子图元
-        self.ancestors = set()  # 祖先
+        self._masters: list[GeoGraphItem] = []      # 父图元
+        self._children: set[GeoGraphItem] = set()  # 子图元
+        self.ancestors: set[GeoGraphItem] = set()  # 祖先
         # 在一轮更新中尚未调用`self.updatePosition()`的父图元
-        self._mastersHaveNotUpdated = set()
-        self._pens = []  # 图元所有的画笔，用于缩放比例时更新
-        self.isCreated = False    # 是否已创建
-        self.isUndefined = False  # 是否未定义
-        self.isAvailable = True   # 是否可用，即是否未删除
-        self.isUpdatable = False  # 是否可作为顶层结点更新
-        self._noMasters = True    # 是否无祖先
-        self.itemAttributes = GeoGraphItemAttributes(
-            self, self.ATTRIBUTES_INFO)  # 图元属性
-        self.itemAttributesSetterDialog = None  # 图元属性设置对话框
+        self._mastersHaveNotUpdated: set[GeoGraphItem] = set()
+        self._pens: list[QPen] = []  # 图元所有的画笔，用于缩放比例时更新
+        self.isCreated: bool = False    # 是否已创建
+        self.isUndefined: bool = False  # 是否未定义
+        self.isAvailable: bool = True   # 是否可用，即是否未删除
+        self.isUpdatable: bool = False  # 是否可作为顶层结点更新
+        self._noMasters: bool = True    # 是否无祖先
+        self.itemAttributes: GeoGraphItemAttributes \
+            = GeoGraphItemAttributes(self, self.ATTRIBUTES_INFO)  # 图元属性
+        self.itemAttributesSetterDialog: \
+            ItemAttributesSetterDialog | None = None  # 图元属性设置对话框
+        self.typePatterns: set[tuple[type]] = set()
         self.setFlag(self.ItemIsSelectable)
 
-    def shortIdentifier(self):
+    def shortIdentifier(self) -> str:
         '''返回图元的简短标识字符串。子类可覆盖此方法以提供更具体的标识字符串。
         '''
         return f'Item {id(self)}'
@@ -63,7 +72,7 @@ class GeoGraphItem(QGraphicsItem):
                     self.scene().removeItem(self)
                     break
 
-    def setUndefined(self, state):
+    def setUndefined(self, state: bool):
         '''设置图元的未定义状态，并递归更新其子图元状态。
 
         :param state: 图元是否未定义。
@@ -75,7 +84,9 @@ class GeoGraphItem(QGraphicsItem):
             for child in self._children:
                 child.setUndefined(state)
 
-    def updateFromMasters(self, master=None, ancestors=None):
+    def updateFromMasters(
+            self, master: GeoGraphItem | None = None,
+            ancestors: set[GeoGraphItem] | None = None):
         '''若没有传入`master`，则初始化`self._mastersHaveNotUpdated`。
         若传入`master`，则从`self._mastersHaveNotUpdated`中删除之；
         若本轮更新中该图元所有相关父图元均已更新，即`self._mastersHaveNotUpdated`
@@ -99,7 +110,8 @@ class GeoGraphItem(QGraphicsItem):
         self._mastersHaveNotUpdated = set(self._masters)
         return True
 
-    def updatePosition(self, master, ancestors):
+    def updatePosition(
+            self, master: GeoGraphItem, ancestors: set[GeoGraphItem]):
         '''被动更新。为避免反复更新同一图元，仅当一轮更新中最后一次调用时更新。
 
         :param master: 调用该函数的父图元。
@@ -118,7 +130,9 @@ class GeoGraphItem(QGraphicsItem):
         '''
         pass
 
-    def typePatternsFilter(self, patterns, idx, itemType, loose=False):
+    def typePatternsFilter(
+            self, patterns: set[tuple[type]],
+            idx: int, itemType: type, loose: bool = False):
         '''筛选可用的类型匹配。参见
         `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
 
@@ -145,7 +159,7 @@ class GeoGraphItem(QGraphicsItem):
         '''
         return self._masters
 
-    def addMaster(self, master):
+    def addMaster(self, master: GeoGraphItem):
         '''为本图元添加父图元。仅在初始化图元时调用。
 
         :param master: 待添加的父图元。
@@ -164,7 +178,7 @@ class GeoGraphItem(QGraphicsItem):
                     self.ancestors.add(ancestor)
             self.instance.addMaster(master.instance)
 
-    def _addFirstMaster(self, master):
+    def _addFirstMaster(self, master: GeoGraphItem):
         '''为本图元添加第一个父图元。子类可在此处作一些特殊处理。
         '''
         self.addMaster(master)
@@ -174,12 +188,12 @@ class GeoGraphItem(QGraphicsItem):
         '''
         return self._children
 
-    def addChild(self, child):
+    def addChild(self, child: GeoGraphItem):
         '''为本图元添加子图元。
         '''
         self._children.add(child)
 
-    def removeChild(self, child):
+    def removeChild(self, child: GeoGraphItem):
         '''删除本图元的子图元。
         '''
         if self.isAvailable and child in self._children:
@@ -204,7 +218,7 @@ class GeoGraphItem(QGraphicsItem):
         '''
         pass
 
-    def zoomScaleChanged(self, zoomChange):
+    def zoomScaleChanged(self, zoomChange: float):
         '''当视图放缩比例改变时调用。子类可覆盖此方法。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
@@ -235,7 +249,7 @@ class GeoGraphItem(QGraphicsItem):
         '''
         self.scene().views()[0].closeItemAttributesDialog(self)
 
-    def _mousePos(self):
+    def _mousePos(self) -> QPointF:
         '''鼠标位置。
 
         :returns: 当前鼠标位置，在场景坐标系下。
@@ -265,7 +279,7 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         self.setPen(self._penFinal)
         self.setZValue(-1)  # 路径图元位于所有图元的下方
 
-    def rawShape(self):
+    def rawShape(self) -> QPainterPath:
         '''原始的路径形状，不具有选中范围。此方法应被子类覆盖。
         '''
         pass
@@ -294,7 +308,7 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
                 self._penFinal if self.isCreated else self._penDrag)
         painter.drawPath(self.rawShape())
 
-    def zoomScaleChanged(self, zoomChange):
+    def zoomScaleChanged(self, zoomChange: float):
         '''当视图放缩比例改变时更新选中宽度。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
@@ -309,13 +323,15 @@ class GeoGraphItemAttributes(MutableMapping):
     '''
     SPECIAL_ATTRTYPES = {'angle': int, 'color': QColor}  # 特殊属性类型，需特殊处理
 
-    def __init__(self, item, attributesInfo=None):
+    def __init__(
+            self, item: GeoGraphItem,
+            attributesInfo: dict[str, dict[str, Any]] | None = None):
         '''初始化图元属性。
 
         :param item: 图元实例，用于获取图元属性。
         :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param attributesInfo: 图元属性信息字典。
-        :type attributesInfo: dict[str, dict[str, any]]
+        :type attributesInfo: dict[str, dict[str, Any]]
         '''
         super().__init__()
         self._item = item
@@ -341,7 +357,7 @@ class GeoGraphItemAttributes(MutableMapping):
         '''
         return len(self._attributes)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         '''获取图元属性值。
 
         :param key: 属性名称。
@@ -356,7 +372,7 @@ class GeoGraphItemAttributes(MutableMapping):
             self._attributes[key] = value
         return value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any):
         '''设置图元属性值。
 
         :param key: 属性名称。
@@ -384,7 +400,7 @@ class GeoGraphItemAttributes(MutableMapping):
                 attrInfo['setter'](self._item, value)
         self._attributes[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         '''删除图元属性。
         '''
         if key in self._attributes:
@@ -392,12 +408,12 @@ class GeoGraphItemAttributes(MutableMapping):
         if key in self.attributesInfo:
             del self.attributesInfo[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         '''迭代图元属性名称。
         '''
         return iter(self._attributes)
 
-    def getAttributesInfo(self, attr):
+    def getAttributesInfo(self, attr: str) -> dict[str, Any]:
         '''获取图元属性信息。
 
         :param attr: 属性名称。

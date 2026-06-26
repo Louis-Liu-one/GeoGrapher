@@ -1,6 +1,12 @@
 '''GeoGrapher点图元的标签
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .GeoPointLabelsManager import GeoPointLabelsManager
+
 import math
 
 from PyQt5.QtWidgets import QGraphicsTextItem
@@ -28,7 +34,8 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         super().__init__()
         self.instance = GeoItem()
         self.setParentItem(parent)
-        self.pointLabelsManager = self._label = None
+        self.pointLabelsManager: GeoPointLabelsManager = None
+        self._label: str = None
         self._labelDistance = 10.  # 标签与点图元的距离
         self._labelAngle = -45     # 标签相对于点图元的角度
         self.setLabelDistance(self._labelDistance)  # 根据距离和角度设置标签位置
@@ -40,7 +47,7 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         font.setPointSizeF(18.)  # 初始字号
         self.setFont(font)
 
-    def setLabel(self, label=None):
+    def setLabel(self, label: str | None = None) -> bool:
         '''设置标签。
         '''
         if label is None:  # 在`.GeoGraphPoint`中初次设置时保存标签管理器
@@ -55,12 +62,12 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
             return True
         return False
 
-    def labelDistance(self):
+    def labelDistance(self) -> float:
         '''获取标签与点图元的距离。
         '''
         return self._labelDistance
 
-    def setLabelDistance(self, distance):
+    def setLabelDistance(self, distance: float):
         '''设置标签与点图元的距离。
         '''
         self._labelDistance = distance
@@ -69,12 +76,12 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         self._realy = -distance * math.sin(angle)
         self._updatePos()
 
-    def labelAngle(self):
+    def labelAngle(self) -> float:
         '''获取标签相对于点图元的角度。
         '''
         return self._labelAngle
 
-    def setLabelAngle(self, angle):
+    def setLabelAngle(self, angle: float):
         '''设置标签相对于点图元的角度。
         '''
         self._labelAngle = int(angle)
@@ -109,7 +116,7 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
             dx, dy = 0, 0
         self.setPos(self._realx - dx, self._realy - dy)  # 以文字中心坐标为原点修改位置
 
-    def setPlainText(self, text):
+    def setPlainText(self, text: str):
         '''设置文字，并以文字中心坐标为原点修改位置。
         '''
         super().setPlainText(text)

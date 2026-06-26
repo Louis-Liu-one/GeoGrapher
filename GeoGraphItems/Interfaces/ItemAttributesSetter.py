@@ -1,6 +1,13 @@
 '''图元属性设置对话框
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PyQt5.QtWidgets import QWidget
+    from ..GeoGraphItem import GeoGraphItem
+
 from PyQt5.QtWidgets import QDialog, QMessageBox, QVBoxLayout, QFormLayout
 from PyQt5.QtWidgets import (
     QLineEdit, QSpinBox, QDoubleSpinBox, QDialogButtonBox)
@@ -17,7 +24,9 @@ class ItemAttributesSetterDialog(QDialog):
     '''图元属性设置对话框。
     '''
 
-    def __init__(self, parent=None, item=None, title='Set Item Attributes'):
+    def __init__(
+            self, parent: QWidget | None = None,
+            item: GeoGraphItem = None, title: str = 'Set Item Attributes'):
         '''初始化对话框。
         '''
         super().__init__(parent)

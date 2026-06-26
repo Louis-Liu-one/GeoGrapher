@@ -12,9 +12,9 @@ class GeoPointLabelsManager:
         '''初始化标签管理器。
         标签管理器存储于场景对象中，一个场景只有一个标签管理器。
         '''
-        self._labels = set()  # 已知标签集
+        self._labels: set[str] = set()  # 已知标签集
 
-    def __next__(self):
+    def __next__(self) -> str:
         '''获取下一个点图元标签。
         返回的标签保证不与已知标签集中的标签（`self._labels`）重复，
         且不会被自动添加到已知标签集中。
@@ -34,7 +34,7 @@ class GeoPointLabelsManager:
                 '_' + str(numberAt) if numberAt else '')
         return label
 
-    def addLabel(self, label):
+    def addLabel(self, label: str) -> bool:
         '''向已知标签集中添加标签，返回是否成功。
         若添加的标签不在已知标签集中，则成功。
         '''
@@ -43,7 +43,7 @@ class GeoPointLabelsManager:
             return True
         return False
 
-    def setLabel(self, raw, label):
+    def setLabel(self, raw: str, label: str) -> bool:
         '''将已知标签集中的`raw`标签修改为`label`标签，返回是否成功。
         若`raw`标签在已知标签集中，
         且`label`标签不在已知标签集中或与`raw`相同，则成功。
@@ -55,7 +55,7 @@ class GeoPointLabelsManager:
             return True
         return False
 
-    def removeLabel(self, label):
+    def removeLabel(self, label: str) -> bool:
         '''删除已知标签集中的标签，返回是否成功。
         若删除的标签在已知标签集中，则成功。
         '''

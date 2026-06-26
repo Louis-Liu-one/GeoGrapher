@@ -1,6 +1,13 @@
 '''GeoGrapher绘制场景
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from PyQt5.QtWidgets import QWidget
+    from .GeoGraphItems.GeoGraphItem import GeoGraphItem
+
 from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
@@ -17,14 +24,14 @@ class GeoGraphScene(QGraphicsScene):
     '''
 
     def __init__(
-            self, parent=None,
+            self, parent: QWidget | None = None,
             darkGridSize=128, darkPenColor='#c0c0c0', darkPenWidth=1.2,
             lightGridSize=32, lightPenColor='#d0d0d0', lightPenWidth=.5,
             backgroundColor='#f1f1f1'):
         '''初始化场景。
 
         :param parent: 父控件。
-        :type parent: PyQt5.QtWidgets.QWidget
+        :type parent: PyQt5.QtWidgets.QWidget | None
         :param darkGridSize: 深色网格大小。
         :type darkGridSize: int
         :param darkPenColor: 深色网格颜色。
@@ -71,7 +78,7 @@ class GeoGraphScene(QGraphicsScene):
         if linesDark:
             painter.drawLines(*linesDark)
 
-    def zoomScaleChanged(self, zoomChange):
+    def zoomScaleChanged(self, zoomChange: float):
         '''放缩比例变化。
 
         :param zoomChange: 新放缩比例与原放缩比例的比值。
@@ -96,7 +103,7 @@ class GeoGraphScene(QGraphicsScene):
         for item in self.items():
             item.zoomScaleChanged(zoomChange)
 
-    def addItem(self, item):
+    def addItem(self, item: GeoGraphItem):
         '''添加图元。
 
         :param item: 待添加的图元。
@@ -107,7 +114,7 @@ class GeoGraphScene(QGraphicsScene):
         item.onAddingSelfToScene()                # 调用图元的添加回调函数
         self.itemsManager.addItem(item.instance)  # 添加基础图元
 
-    def removeItem(self, item):
+    def removeItem(self, item: GeoGraphItem):
         '''删除图元。
 
         :param item: 待删除的图元。
