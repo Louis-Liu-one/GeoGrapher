@@ -57,21 +57,6 @@ class GeoGraphItem(QGraphicsItem):
         '''
         return f'Item {id(self)}'
 
-    def update(self):
-        '''视图调用时检查是否可用。
-        '''
-        super().update()
-        self._checkAvailable()
-
-    def _checkAvailable(self):
-        '''检查图元是否可用。若图元的父图元之一不可用，则该图元不可用，删除图元。
-        '''
-        if self.isAvailable:
-            for item in self._masters:
-                if not item.isAvailable:
-                    self.scene().removeItem(self)
-                    break
-
     def setUndefined(self, state: bool):
         '''设置图元的未定义状态，并递归更新其子图元状态。
 
@@ -86,7 +71,7 @@ class GeoGraphItem(QGraphicsItem):
 
     def updateFromMasters(
             self, master: GeoGraphItem | None = None,
-            ancestors: set[GeoGraphItem] | None = None):
+            ancestors: set[GeoGraphItem] | None = None) -> bool:
         '''若没有传入`master`，则初始化`self._mastersHaveNotUpdated`。
         若传入`master`，则从`self._mastersHaveNotUpdated`中删除之；
         若本轮更新中该图元所有相关父图元均已更新，即`self._mastersHaveNotUpdated`
@@ -97,6 +82,8 @@ class GeoGraphItem(QGraphicsItem):
         :param ancestors: 本轮更新中的顶层图元。
         :type ancestors:
             set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
+        :returns: 是否可以更新。
+        :rtype: bool
         '''
         if master is not None:
             ancestors = set(ancestors)
@@ -166,7 +153,7 @@ class GeoGraphItem(QGraphicsItem):
         :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         if self._noMasters:
-            self._noMasters = False
+            self._noMasters = False  # 必须使用标志变量，否则会造成无限循环递归
             self._addFirstMaster(master)
         else:
             self._masters.append(master)
@@ -199,14 +186,6 @@ class GeoGraphItem(QGraphicsItem):
         if self.isAvailable and child in self._children:
             self._children.remove(child)
             self.instance.removeChild(child.instance)
-
-    def removeSelf(self):
-        '''删除自身，而不在场景中删除。
-        '''
-        self.onRemovingSelfFromScene()
-        self.isAvailable = False
-        for master in self._masters:
-            master.removeChild(self)  # 从所有父图元中删除自身
 
     def onAddingSelfToScene(self):
         '''在场景中添加时调用。子类可覆盖此方法。
@@ -292,8 +271,8 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         '''
         pathStroker = QPainterPathStroker()
         pathStroker.setWidth(self._selectWidth)
-        rawShape = QPainterPath if not self._masters else self.rawShape
-        return pathStroker.createStroke(rawShape())
+        return pathStroker.createStroke(
+            QPainterPath() if not self._masters else self.rawShape())
 
     def paint(self, painter, option, widget=None):
         '''绘制路径。根据图元情况选择画笔。

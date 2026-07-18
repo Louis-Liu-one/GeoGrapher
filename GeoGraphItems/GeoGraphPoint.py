@@ -2,10 +2,9 @@
 '''
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QGraphicsItem
     from .GeoGraphItem import GeoGraphPathItem
 
 from PyQt5.QtWidgets import QStyle, QApplication, QGraphicsEllipseItem
@@ -83,7 +82,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.typePatterns = {(GeoGraphPoint,)}
         self._label = GeoGraphPointLabel(self)  # 点标签
 
-    def __str__(self) -> str:
+    def __str__(self):
         '''返回点图元的标识字符串。
         '''
         return f'Point {self._label.toPlainText()}'
@@ -115,12 +114,12 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         :type point: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         '''
         self.setPos(point.pos())
+        point.removeChild(self)
         point.scene().removeItem(point)
         self.ancestors = point.ancestors.copy()
         self.onPath = point.onPath
         self.isFree = point.isFree
         self._masters = []
-        point.removeChild(self)
         if point.isIntersec:  # 是交点
             self.setFlag(self.ItemIsMovable, False)
             self.setFlag(self.ItemSendsGeometryChanges, False)
@@ -144,7 +143,6 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             self.setPen(self._penSelected)
         else:
             self.setPen(self._penFinal)
-        self._checkAvailable()
         super().paint(painter, option, widget)
 
     def _newPosition(self, pos: QPointF) -> QPointF:
@@ -198,9 +196,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._label.pointLabelsManager.removeLabel(
             self._label.toPlainText())
 
-    def itemChange(
-            self, change: QGraphicsItem.GraphicsItemChange,
-            value: Any) -> Any:
+    def itemChange(self, change, value):
         '''移动点时调用。参见`self._newPosition()`。
         '''
         if self.scene() \

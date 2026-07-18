@@ -11,8 +11,6 @@ if TYPE_CHECKING:
     from .GeoGraphScene import GeoGraphScene
     from .GeoGraphItems.GeoGraphItem import GeoGraphItem
 
-import collections
-
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsTextItem
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
@@ -64,11 +62,13 @@ class GeoGraphView(QGraphicsView):
             GeoGraphItem = None                # 当前正在设置属性的图元
         self._itemAttributesSetterDialog: \
             ItemAttributesSetterDialog = None  # 当前的图元属性设置对话框
+        self._pressPos: QPoint | None = None  # 鼠标按下时的位置，用于判断是否为点击事件
 
     def mousePressEvent(self, event):
         '''按下鼠标时，若主模式为绘制模式，则创建图元或添加父图元。
         '''
         super().mousePressEvent(event)
+        self._pressPos = event.pos()
         if event.button() == Qt.LeftButton \
                 and self.mainMode == GeoMainMode.DRAW:
             self._drawModeMousePress(event.pos())
@@ -136,6 +136,9 @@ class GeoGraphView(QGraphicsView):
 
     def _repeatCheckingVarInputRequirement(self) -> bool:
         '''重复检查变量输入要求。用于在一次创建过程中需要输入多个变量值的情况。
+
+        :returns: 变量是否全部输入完成。
+        :rtype: bool
         '''
         while True:
             status, continueChecking = self._checkVarInputRequirement()
@@ -171,7 +174,7 @@ class GeoGraphView(QGraphicsView):
     def _afterCreatingItem(self):
         '''完成创建后进行的收尾工作。包括：删除未完成创建的图元，清空选择过的图元列表。
         '''
-        if self._creatingItem is not None:
+        if self._creatingItem is not None:  # 若当前正在创建的图元未完成创建便退出，则删除该图元
             self.scene().removeItem(self._creatingItem)
             self._creatingItem = None
         self._drawModeSelectedItems = []
@@ -259,23 +262,11 @@ class GeoGraphView(QGraphicsView):
         '''松开鼠标时，更新图元。以当前选中的可操作图元为顶层，开始更新。
         '''
         super().mouseReleaseEvent(event)
-        if event.button() == Qt.LeftButton:
-            # 若当前选中了可操作图元
-            q = collections.deque()
-            ancestors = set()
-            for item in self.scene().selectedItems():
-                if item.isUpdatable and not item.isUndefined:
-                    q.append(item)
-                    ancestors.add(item)
-            while q:  # 将相关图元全部还原为更新前的准备状态
-                master = q.popleft()
-                for child in master.children():
-                    q.append(child)  # 广度优先遍历
-                master.updateFromMasters()
-                master.instance.update()
-            for ancestor in ancestors:
-                for child in ancestor.children():
-                    child.updatePosition(ancestor, ancestors)
+        if event.button() == Qt.LeftButton and self._pressPos is not None \
+                and self._pressPos != event.pos():
+            # 若当前选中了可操作图元且为拖动事件，则从选中的图元开始更新
+            self.scene().updateItems(self.scene().selectedItems())
+        self._pressPos = None
 
     def keyPressEvent(self, event):
         '''按下删除键时，删除选中图元。
@@ -284,10 +275,11 @@ class GeoGraphView(QGraphicsView):
         if event.key() == Qt.Key_Backspace \
                 and self.mainMode == GeoMainMode.SELECT \
                 and not isinstance(
-                    self.scene().focusItem(), QGraphicsTextItem):
+                    self.scene().focusItem(), QGraphicsTextItem):  # 正在输入文本时不删除
             for item in self.scene().selectedItems():
                 if not isinstance(item, QGraphicsTextItem):
                     self.scene().removeItem(item)
+        # 按下V键时，切换选中图元的可见性，此功能仅作为早期测试
         elif event.key() == Qt.Key_V \
                 and self.mainMode == GeoMainMode.SELECT \
                 and not isinstance(

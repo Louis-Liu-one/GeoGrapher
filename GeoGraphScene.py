@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from PyQt5.QtWidgets import QWidget
     from .GeoGraphItems.GeoGraphItem import GeoGraphItem
 
+import collections
+
 from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import QLine
@@ -115,12 +117,34 @@ class GeoGraphScene(QGraphicsScene):
         self.itemsManager.addItem(item.instance)  # 添加基础图元
 
     def removeItem(self, item: GeoGraphItem):
-        '''删除图元。
+        '''删除图元，并递归删除子图元。
 
         :param item: 待删除的图元。
         :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         super().removeItem(item)
-        item.removeSelf()
+        item.onRemovingSelfFromScene()
+        item.isAvailable = False
+        for master in item.masters():
+            master.removeChild(item)  # 从所有父图元中删除图元
         self.itemsManager.removeItem(item.instance)  # 删除基础图元
         item.instance = None
+        for child in item.children():
+            self.removeItem(child)  # 递归删除子图元
+
+    def updateItems(self, items: set[GeoGraphItem]):
+        q = collections.deque()
+        ancestors: set[GeoGraphItem] = set()
+        for item in items:
+            if item.isUpdatable and not item.isUndefined:
+                q.append(item)
+                ancestors.add(item)
+        while q:  # 将相关图元全部还原为更新前的准备状态
+            master: GeoGraphItem = q.popleft()
+            for child in master.children():
+                q.append(child)  # 广度优先遍历
+            master.updateFromMasters()
+            master.instance.update()
+        for ancestor in ancestors:
+            for child in ancestor.children():
+                child.updatePosition(ancestor, ancestors)
