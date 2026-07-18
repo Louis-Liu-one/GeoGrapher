@@ -24,17 +24,11 @@ def judgeFuncForReal(
     仅支持整数或浮点数的判断。
 
     :param vtype: 图元类型。`int`、`float`及它们的子类。
-    :type vtype: type
     :param vmin: 变量最小值。
-    :type vmin: int | float
     :param vmax: 变量最大值。
-    :type vmax: int | float
     :param imin: 变量可否与最小值相同。
-    :type imin: bool
     :param imax: 变量可否与最大值相同。
-    :type imax: bool
     :returns: `judgeFunc`函数。
-    :rtype: typing.Callable[[Any], bool]
     '''
     def judgeFunc(val: Any) -> bool:
         return isinstance(val, vtype) \
@@ -53,12 +47,9 @@ class GeoGraphVariable(GeoGraphItem):
         '''创建变量图元。
 
         :param insType: 基础图元的类型。在`.Core`中定义。
-        :type insType: type
         :param default: 变量初始值。将作为参数传入`insType.__init__()`。
-        :type default: Any
         :param judgeFunc: 传入一个参数`val`、返回布尔值的函数，
                           判断`val`可否设置为变量图元的值。若为`None`，则无限制。
-        :type judgeFunc: typing.Callable[[Any], bool]
         '''
         super().__init__()
         self.instance = insType(default)
@@ -81,7 +72,6 @@ class GeoGraphVariable(GeoGraphItem):
         '''询问用户输入，并将其设置为变量图元的值。子类可在此处实现一些特殊的询问方式。
 
         :returns: 是否成功设置了变量图元的值。默认不询问，直接返回成功。
-        :rtype: bool
         '''
         return True  # 默认不询问，直接返回成功
 
@@ -96,10 +86,8 @@ class GeoGraphIntVar(GeoGraphVariable):
         '''创建整数变量图元。
 
         :param default: 变量初始值。默认为`0`。
-        :type default: int
         :param judgeFunc: 传入一个参数`val`、返回布尔值的函数，
                           判断`val`可否设置为变量图元的值。若为`None`，则无限制。
-        :type judgeFunc: typing.Callable[[Any], bool]
         '''
         super().__init__(GeoIntVar, default, judgeFunc)
 
@@ -111,7 +99,6 @@ class GeoGraphIsecNoVar(GeoGraphIntVar):
         '''创建交点编号变量图元。
 
         :param default: 变量初始值。默认为`1`。
-        :type default: int
         '''
         super().__init__(default, judgeFuncForReal(int, 1, 2))
 
@@ -119,7 +106,6 @@ class GeoGraphIsecNoVar(GeoGraphIntVar):
         '''询问用户输入交点编号，并将其设置为变量图元的值。
 
         :returns: 是否成功设置了变量图元的值。
-        :rtype: bool
         '''
         dialog = IsecNoAskerDialog(view, 'Choose Intersection Number')
         if dialog.exec():  # 正确选择并点击OK，交点图元创建成功

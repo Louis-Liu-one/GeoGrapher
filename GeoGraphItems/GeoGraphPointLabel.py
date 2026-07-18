@@ -23,29 +23,24 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
     '''点图元标签类，是点图元旁的标签。
     '''
 
-    def __init__(self, parent):
+    def __init__(self, parent: GeoGraphItem):
         '''初始化点图元标签。
 
         :param parent: 待标记的点图元。
-        :type parent: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
-        :param label: 标签内容。
-        :type label: str
         '''
         super().__init__()
         self.instance = GeoItem()
         self.setParentItem(parent)
         self.pointLabelsManager: GeoPointLabelsManager = None
         self._label: str = None
-        self._labelDistance = 10.  # 标签与点图元的距离
-        self._labelAngle = -45     # 标签相对于点图元的角度
+        self._labelDistance: float = 10.     # 标签与点图元的距离
+        self._labelAngle: int | float = -45  # 标签相对于点图元的角度
         self.setLabelDistance(self._labelDistance)  # 根据距离和角度设置标签位置
         self.setTextInteractionFlags(Qt.TextEditorInteraction)  # 可编辑的标签
         self.setDefaultTextColor(QColor('#000000'))  # 字体颜色
         self.setCursor(Qt.IBeamCursor)             # 鼠标样式
         self.setFlag(self.ItemStacksBehindParent)  # 标签位于点图元下方
-        font = QFont()
-        font.setPointSizeF(18.)  # 初始字号
-        self.setFont(font)
+        self.setFont(QFont(None, 18))  # 设置初始字号为18
 
     def setLabel(self, label: str | None = None) -> bool:
         '''设置标签。
@@ -91,7 +86,7 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         self._updatePos()
 
     def _updatePos(self):
-        '''以文字中心坐标为原点修改位置。
+        '''按照方向修改位置。
         '''
         angle = self.labelAngle() % 360
         labelWidth = self.boundingRect().width()

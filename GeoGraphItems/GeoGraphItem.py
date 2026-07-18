@@ -61,7 +61,6 @@ class GeoGraphItem(QGraphicsItem):
         '''设置图元的未定义状态，并递归更新其子图元状态。
 
         :param state: 图元是否未定义。
-        :type state: bool
         '''
         if self.isUndefined != state:
             self.isUndefined = state
@@ -78,12 +77,8 @@ class GeoGraphItem(QGraphicsItem):
         已空，则该图元可以更新，返回`True`，反之返回`False`。
 
         :param master: 调用该函数的父图元。
-        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param ancestors: 本轮更新中的顶层图元。
-        :type ancestors:
-            set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         :returns: 是否可以更新。
-        :rtype: bool
         '''
         if master is not None:
             ancestors = set(ancestors)
@@ -102,10 +97,7 @@ class GeoGraphItem(QGraphicsItem):
         '''被动更新。为避免反复更新同一图元，仅当一轮更新中最后一次调用时更新。
 
         :param master: 调用该函数的父图元。
-        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param ancestors: 本轮更新中的顶层图元。
-        :type ancestors:
-            set[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         '''
         if self.updateFromMasters(master, ancestors):
             self.updateSelfPosition()     # 更新自身
@@ -119,20 +111,15 @@ class GeoGraphItem(QGraphicsItem):
 
     def typePatternsFilter(
             self, patterns: set[tuple[type]],
-            idx: int, itemType: type, loose: bool = False):
+            idx: int, itemType: type, loose: bool = False) -> set[tuple[type]]:
         '''筛选可用的类型匹配。参见
         `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
 
         :param patterns: 可用的所有类型匹配。
-        :type patterns: set[tuple[type]]
         :param idx: 当前匹配位置。
-        :type idx: int
         :param itemType: 待匹配的类型。
-        :type itemType: type
         :param loose: 是否宽松匹配，即待匹配类型是否可为类型匹配中对应位置的子类。
-        :type loose: bool
         :returns: 筛选后可用的类型匹配。
-        :rtype: set[tuple[type]]
         '''
         return {
             typePattern for typePattern
@@ -141,16 +128,13 @@ class GeoGraphItem(QGraphicsItem):
             and (issubclass(typePattern[idx], itemType)
                  if loose else issubclass(itemType, typePattern[idx]))}
 
-    def masters(self):
+    def masters(self) -> list[GeoGraphItem]:
         '''本图元的父图元。
         '''
         return self._masters
 
     def addMaster(self, master: GeoGraphItem):
         '''为本图元添加父图元。仅在初始化图元时调用。
-
-        :param master: 待添加的父图元。
-        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         if self._noMasters:
             self._noMasters = False  # 必须使用标志变量，否则会造成无限循环递归
@@ -170,7 +154,7 @@ class GeoGraphItem(QGraphicsItem):
         '''
         self.addMaster(master)
 
-    def children(self):
+    def children(self) -> set[GeoGraphItem]:
         '''本图元的子图元。
         '''
         return self._children
@@ -201,7 +185,6 @@ class GeoGraphItem(QGraphicsItem):
         '''当视图放缩比例改变时调用。子类可覆盖此方法。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
-        :type zoomChange: float
         '''
         pass
 
@@ -232,7 +215,6 @@ class GeoGraphItem(QGraphicsItem):
         '''鼠标位置。
 
         :returns: 当前鼠标位置，在场景坐标系下。
-        :rtype: PyQt5.QtCore.QPointF
         '''
         view = self.scene().views()[0]
         return view.mapToScene(view.mapFromGlobal(QCursor.pos()))
@@ -244,9 +226,6 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
 
     def __init__(self):
         '''初始化路径图元。
-
-        :param master: 图元的第一个父图元。
-        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         super().__init__()
         self._penDrag = QPen(QColor('#000000'), 1., Qt.DashLine)  # 创建时的画笔
@@ -267,7 +246,6 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         '''路径形状。
 
         :returns: 路径的形状，具有带宽度的选中范围。
-        :rtype: PyQt5.QtGui.QPainterPath
         '''
         pathStroker = QPainterPathStroker()
         pathStroker.setWidth(self._selectWidth)
@@ -291,7 +269,6 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         '''当视图放缩比例改变时更新选中宽度。
 
         :param zoomChange: 放缩比例的变化比例，即新放缩比例比原放缩比例。
-        :type zoomChange: float
         '''
         super().zoomScaleChanged(zoomChange)
         self._selectWidth /= zoomChange
@@ -308,9 +285,7 @@ class GeoGraphItemAttributes(MutableMapping):
         '''初始化图元属性。
 
         :param item: 图元实例，用于获取图元属性。
-        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         :param attributesInfo: 图元属性信息字典。
-        :type attributesInfo: dict[str, dict[str, Any]]
         '''
         super().__init__()
         self._item = item
@@ -340,7 +315,6 @@ class GeoGraphItemAttributes(MutableMapping):
         '''获取图元属性值。
 
         :param key: 属性名称。
-        :type key: str
         :returns: 图元属性值。
         '''
         if key not in self.attributesInfo:
@@ -355,7 +329,6 @@ class GeoGraphItemAttributes(MutableMapping):
         '''设置图元属性值。
 
         :param key: 属性名称。
-        :type key: str
         :param value: 属性值。
         '''
         if key in self.attributesInfo:
@@ -396,7 +369,6 @@ class GeoGraphItemAttributes(MutableMapping):
         '''获取图元属性信息。
 
         :param attr: 属性名称。
-        :type attr: str
         :returns: 图元属性信息。
         '''
         return self.attributesInfo[attr]

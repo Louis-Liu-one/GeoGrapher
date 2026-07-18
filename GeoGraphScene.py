@@ -33,21 +33,13 @@ class GeoGraphScene(QGraphicsScene):
         '''初始化场景。
 
         :param parent: 父控件。
-        :type parent: PyQt5.QtWidgets.QWidget | None
         :param darkGridSize: 深色网格大小。
-        :type darkGridSize: int
         :param darkPenColor: 深色网格颜色。
-        :type darkPenColor: str
         :param darkPenWidth: 深色网格粗细。
-        :type darkPenWidth: float
         :param lightGridSize: 浅色网格大小。
-        :type lightGridSize: int
         :param lightPenColor: 浅色网格颜色。
-        :type lightPenColor: str
         :param lightPenWidth: 浅色网格粗细。
-        :type lightPenWidth: float
         :param backgroundColor: 背景颜色。
-        :type backgroundColor: str
         '''
         super().__init__(parent)
         self.lightGridSize, self.darkGridSize = lightGridSize, darkGridSize
@@ -84,7 +76,6 @@ class GeoGraphScene(QGraphicsScene):
         '''放缩比例变化。
 
         :param zoomChange: 新放缩比例与原放缩比例的比值。
-        :type zoomChange: float
         '''
         # 更新网格画笔宽度
         self._penDark.setWidthF(
@@ -107,9 +98,6 @@ class GeoGraphScene(QGraphicsScene):
 
     def addItem(self, item: GeoGraphItem):
         '''添加图元。
-
-        :param item: 待添加的图元。
-        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         super().addItem(item)
         item.zoomScaleChanged(self.zoomScale)
@@ -117,10 +105,7 @@ class GeoGraphScene(QGraphicsScene):
         self.itemsManager.addItem(item.instance)  # 添加基础图元
 
     def removeItem(self, item: GeoGraphItem):
-        '''删除图元，并递归删除子图元。
-
-        :param item: 待删除的图元。
-        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
+        '''删除图元，并递归删除其子图元。
         '''
         super().removeItem(item)
         item.onRemovingSelfFromScene()
@@ -133,6 +118,9 @@ class GeoGraphScene(QGraphicsScene):
             self.removeItem(child)  # 递归删除子图元
 
     def updateItems(self, items: set[GeoGraphItem]):
+        '''从给定的图元集合开始递归更新图元，保证每个图元实际上最多只会被计算一次。
+        先将相关图元还原为更新前的准备状态，再更新图元。
+        '''
         q = collections.deque()
         ancestors: set[GeoGraphItem] = set()
         for item in items:

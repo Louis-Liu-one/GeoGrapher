@@ -112,17 +112,11 @@ class ColorSelector(QWidget):
 
     def value(self) -> QColor:
         '''返回当前选择的颜色。
-
-        :returns: 当前选择的颜色。
-        :rtype: PyQt5.QtGui.QColor
         '''
         return self._color
 
     def setValue(self, color: QColor):
-        '''设置颜色。
-
-        :param color: 要设置的颜色。
-        :type color: PyQt5.QtGui.QColor
+        '''设置选择器颜色。
         '''
         if isinstance(color, QColor) and color.isValid():
             self._color = color

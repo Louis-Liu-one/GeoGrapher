@@ -111,7 +111,6 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''将给定点图元复制到自己。仅在初始化时调用。
 
         :param point: 给定的点图元。
-        :type point: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         '''
         self.setPos(point.pos())
         point.removeChild(self)
@@ -146,15 +145,13 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         super().paint(painter, option, widget)
 
     def _newPosition(self, pos: QPointF) -> QPointF:
-        '''根据鼠标移动返回点位置。
+        '''根据鼠标移动计算点图元的实际位置。
         若点在路径上，则返回鼠标位置在路径上的投影坐标；
         若点为自由点，则返回网格吸附后的坐标。
         仅被`self.itemChange()`调用。
 
         :param pos: 鼠标位置。
-        :type pos: PyQt5.QtCore.QPointF
         :returns: 返回的点位置。
-        :rtype: PyQt5.QtCore.QPointF
         '''
         if not self.isFree:  # 路径上
             ins = self.onPath.instance
@@ -207,34 +204,22 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
 
     def pointSize(self) -> float:
         '''返回点的大小。
-
-        :returns: 点的大小。
-        :rtype: float
         '''
         return self._pointSize
 
     def setPointSize(self, size: float):
         '''设置点的大小。仅在初始化时调用。
-
-        :param size: 点的大小。
-        :type size: float
         '''
         self._pointSize = size
         self.setRect(-size / 2, -size / 2, size, size)
 
     def drawColor(self) -> QColor:
         '''返回点的描边颜色。
-
-        :returns: 点的描边颜色。
-        :rtype: PyQt5.QtGui.QColor
         '''
         return self._drawColor
 
     def setDrawColor(self, color: QColor):
         '''设置点的描边颜色。
-
-        :param color: 点的描边颜色。
-        :type color: PyQt5.QtGui.QColor
         '''
         self._drawColor = color
         self._penFinal.setColor(color)
@@ -242,17 +227,11 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
 
     def fillColor(self) -> QColor:
         '''返回点的填充颜色。
-
-        :returns: 点的填充颜色。
-        :rtype: PyQt5.QtGui.QColor
         '''
         return self._fillColor
 
     def setFillColor(self, color: QColor):
         '''设置点的填充颜色。
-
-        :param color: 点的填充颜色。
-        :type color: PyQt5.QtGui.QColor
         '''
         self._fillColor = color
         self.setBrush(QBrush(color))

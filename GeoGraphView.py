@@ -90,7 +90,6 @@ class GeoGraphView(QGraphicsView):
         以避免产生歧义。
 
         :param pos: 鼠标点击的位置，在视图坐标系下。
-        :type pos: PyQt5.QtCore.QPoint
         '''
         selectedItem = self.itemAt(pos)  # 选中的图元
         scenePos = self.mapToScene(pos)  # 转换为场景坐标系
@@ -138,7 +137,6 @@ class GeoGraphView(QGraphicsView):
         '''重复检查变量输入要求。用于在一次创建过程中需要输入多个变量值的情况。
 
         :returns: 变量是否全部输入完成。
-        :rtype: bool
         '''
         while True:
             status, continueChecking = self._checkVarInputRequirement()
@@ -183,7 +181,6 @@ class GeoGraphView(QGraphicsView):
         '''为当前在创建的图元添加父图元。
 
         :param master: 要添加的父图元。
-        :type master: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
         '''
         # 为在创建的图元添加父图元
         self._creatingItem.addMaster(master)
@@ -195,9 +192,7 @@ class GeoGraphView(QGraphicsView):
         自动判断该点是否为自由点、一路径上的点或两路径的交点。
 
         :param scenePos: 创建点的坐标，在场景坐标系下。
-        :type scenePos: PyQt5.QtCore.QPointF
         :returns: 创建好的点。
-        :rtype: GeoGrapher.GeoGraphItems.GeoGraphPoint.GeoGraphPoint
         '''
         # 在指定坐标附近的图元
         items = _createdItemsFilter(self.items(self.mapFromScene(scenePos)))
@@ -226,13 +221,8 @@ class GeoGraphView(QGraphicsView):
         自动判断该点的交点编号，使得该点距离指定坐标较近。
 
         :param scenePos: 创建交点的坐标，在场景坐标系下。
-        :type scenePos: PyQt5.QtCore.QPointF
         :param items: 取前两个为交点的路径。
-        :type items: list[GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem]
         :returns: 创建好的交点。
-        :rtype:
-            GeoGrapher.GeoGraphItems\
-.GeoGraphIntersection.GeoGraphIntersection
         '''
         point = GeoGraphIntersection()
         point.addMaster(items[0])
@@ -279,21 +269,9 @@ class GeoGraphView(QGraphicsView):
             for item in self.scene().selectedItems():
                 if not isinstance(item, QGraphicsTextItem):
                     self.scene().removeItem(item)
-        # 按下V键时，切换选中图元的可见性，此功能仅作为早期测试
-        elif event.key() == Qt.Key_V \
-                and self.mainMode == GeoMainMode.SELECT \
-                and not isinstance(
-                    self.scene().focusItem(), QGraphicsTextItem):
-            # Only for tests
-            for item in self.scene().selectedItems():
-                if not isinstance(item, QGraphicsTextItem):
-                    item.setVisible(not item.isVisible())
 
     def openItemAttributesDialog(self, item: GeoGraphItem):
-        '''打开图元属性设置对话框。
-
-        :param item: 待设置属性的图元。
-        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem
+        '''打开给定图元的属性设置对话框。
         '''
         self.closeItemAttributesDialog()
         self._itemWithCurrentAttributesDialog = item
@@ -306,7 +284,6 @@ class GeoGraphView(QGraphicsView):
         '''关闭图元属性设置对话框。
 
         :param item: 待关闭属性设置对话框的图元。默认为`None`，即关闭当前正在设置属性的图元的属性设置对话框。
-        :type item: GeoGrapher.GeoGraphItems.GeoGraphItem.GeoGraphItem | None
         '''
         if item is None or item == self._itemWithCurrentAttributesDialog:
             if self._itemWithCurrentAttributesDialog:
