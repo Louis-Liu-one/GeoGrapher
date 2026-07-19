@@ -23,6 +23,11 @@ class GeoGraphItem(QGraphicsItem):
     '''
     # 图元默认属性，子类可在此基础上添加以设置默认属性
     ATTRIBUTES_INFO = {
+        'visible': {
+            'default': True,
+            'getter': lambda self: self.isVisible(),
+            'setter': lambda self, value: self.setVisible(value)
+        },
         'opacity': {
             'default': 1.0, 'min': 0.0, 'max': 1.0, 'decimals': 2,
             'getter': lambda self: self.opacity(),

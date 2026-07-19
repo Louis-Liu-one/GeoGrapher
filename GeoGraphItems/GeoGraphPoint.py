@@ -30,8 +30,8 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             'getter': lambda self: self.pointSize(),
             'setter': lambda self, value: self.setPointSize(value),
         },
-        'pointDrawColor': {
-            'type': 'color', 'title': 'Draw Color',
+        'pointBorderColor': {
+            'type': 'color', 'title': 'Border Color',
             'getter': lambda self: self.drawColor(),
             'setter': lambda self, value: self.setDrawColor(value),
         },
@@ -40,18 +40,18 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
             'getter': lambda self: self.fillColor(),
             'setter': lambda self, value: self.setFillColor(value),
         },
-        'pointLabel': {
-            'type': str, 'title': 'Label',
+        'pointLabelText': {
+            'group': 'Label', 'type': str, 'title': 'Text',
             'getter': lambda self: self._label.toPlainText(),
             'setter': lambda self, value: self._label.setLabel(value),
         },
         'pointLabelAngle': {
-            'type': 'angle', 'title': 'Point Label Angle',
+            'group': 'Label', 'type': 'angle', 'title': 'Angle',
             'getter': lambda self: self._label.labelAngle(),
             'setter': lambda self, value: self._label.setLabelAngle(value),
         },
         'pointLabelDistance': {
-            'type': float, 'title': 'Point Label Distance',
+            'group': 'Label', 'type': float, 'title': 'Distance',
             'min': 5, 'max': 100, 'step': 2,
             'getter': lambda self: self._label.labelDistance(),
             'setter': lambda self, value: self._label.setLabelDistance(value),
