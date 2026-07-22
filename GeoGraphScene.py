@@ -107,6 +107,8 @@ class GeoGraphScene(QGraphicsScene):
     def removeItem(self, item: GeoGraphItem):
         '''删除图元，并递归删除其子图元。
         '''
+        if item.instance is None:
+            return  # 图元已经被删除
         super().removeItem(item)
         item.onRemovingSelfFromScene()
         item.isAvailable = False

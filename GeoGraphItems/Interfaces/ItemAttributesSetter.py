@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QHeaderView
 from PyQt5.QtWidgets import (
     QLineEdit, QSpinBox, QDoubleSpinBox, QDialogButtonBox, QCheckBox)
 from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtCore import Qt
 
 from .FormUtils import IntValueSliderSelector, ColorSelector
 
@@ -130,14 +130,12 @@ class ItemAttributesSetterDialog(QDialog):
         return attributeBox
 
     def _adjustPosition(self):
-        '''调整对话框位置，使其出现在图元的右上方。
+        '''调整对话框位置，使其出现在窗口左侧。
         '''
         if self._item and self._item.scene() and self._item.scene().views():
-            view_top_left = self._item.scene().views()[0].mapToGlobal(
-                QPointF(0, 0).toPoint())
-            dlg_x = view_top_left.x() - self.width() - 15  # 调整对话框横坐标，使其出现在视图左侧
-            dlg_y = view_top_left.y()
-            self.move(dlg_x, dlg_y)
+            topRight = self._item.scene().views()[0].window().frameGeometry()
+            # 调整对话框横坐标，使其出现在窗口左侧
+            self.move(topRight.x() - self.width(), topRight.y())
 
     def accept(self):
         '''确认设置，更新图元属性。'''
@@ -147,7 +145,7 @@ class ItemAttributesSetterDialog(QDialog):
             except ValueError:
                 QMessageBox.warning(
                     self, 'Input Error',
-                    f'The value for attribute "{
+                    f'The value of attribute "{
                         self._item.itemAttributes.getAttributesInfo(
                             attr)['title']}" is invalid. Skipping.',
                     QMessageBox.Ok)

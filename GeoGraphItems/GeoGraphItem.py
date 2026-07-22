@@ -239,7 +239,6 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         self._selectWidth = 10.  # 选中范围的宽度
         # 所有画笔
         self._pens = [self._penDrag, self._penFinal, self._penSelected]
-        self.setPen(self._penFinal)
         self.setZValue(-1)  # 路径图元位于所有图元的下方
 
     def rawShape(self) -> QPainterPath:
@@ -260,10 +259,10 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
     def paint(self, painter, option, widget=None):
         '''绘制路径。根据图元情况选择画笔。
         '''
-        self.update()
+        if not self.isCreated:
+            self.update()  # 只有正在创建时才需要不断更新以不断重绘
         self.setPath(self.shape())
         if option.state & QStyle.State_Selected:
-            option.state = QStyle.State_None
             painter.setPen(self._penSelected)
         else:
             painter.setPen(

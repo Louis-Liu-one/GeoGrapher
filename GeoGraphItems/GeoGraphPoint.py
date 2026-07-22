@@ -32,8 +32,8 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         },
         'pointBorderColor': {
             'type': 'color', 'title': 'Border Color',
-            'getter': lambda self: self.drawColor(),
-            'setter': lambda self, value: self.setDrawColor(value),
+            'getter': lambda self: self.borderColor(),
+            'setter': lambda self, value: self.setBorderColor(value),
         },
         'pointFillColor': {
             'type': 'color', 'title': 'Fill Color',
@@ -62,18 +62,18 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''初始化点图元。
         '''
         super().__init__()
-        self._penFinal = QPen(QColor('#000000'), 2.)
-        self._penSelected = QPen(QColor('#808080'), 2.)
-        self._pens = [self._penFinal, self._penSelected]
         self._pointSize = 12.
-        self._drawColor = QColor('#000000')
-        self._fillColor = QColor('#e6e6e6')
+        self._borderColor = QColor('#000000')            # 边缘颜色
+        self._fillColor = QColor('#e6e6e6')              # 填充颜色
+        self._selectedColor = QColor('#808080')          # 被选中时的颜色
+        self._penFinal = QPen(self._borderColor, 2.)       # 完成创建时的画笔
+        self._penSelected = QPen(self._selectedColor, 2.)  # 被选中时的画笔
+        self._brush = QBrush(self._fillColor)              # 用于填充的刷子
+        self._pens = [self._penFinal, self._penSelected]   # 所有画笔
         self.setPointSize(self._pointSize)
-        self.setPen(self._penFinal)
-        self.setFillColor(self._fillColor)
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
-        self.isUpdatable: bool = True
+        self.isUpdatable: bool = True                # 是否可被更新
         self.isFree: bool = True                     # 是否为自由点
         self.onPath: GeoGraphPathItem | None = None  # 所在路径
         self.isIntersec: bool = False                # 是否为交点
@@ -138,11 +138,11 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''
         # 根据选中状态设置画笔
         if option.state & QStyle.State_Selected:
-            option.state = QStyle.State_None
-            self.setPen(self._penSelected)
+            painter.setPen(self._penSelected)
         else:
-            self.setPen(self._penFinal)
-        super().paint(painter, option, widget)
+            painter.setPen(self._penFinal)
+        painter.setBrush(self._brush)
+        painter.drawEllipse(self.rect())
 
     def _newPosition(self, pos: QPointF) -> QPointF:
         '''根据鼠标移动计算点图元的实际位置。
@@ -208,22 +208,21 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         return self._pointSize
 
     def setPointSize(self, size: float):
-        '''设置点的大小。仅在初始化时调用。
+        '''设置点的大小。
         '''
         self._pointSize = size
         self.setRect(-size / 2, -size / 2, size, size)
 
-    def drawColor(self) -> QColor:
+    def borderColor(self) -> QColor:
         '''返回点的描边颜色。
         '''
-        return self._drawColor
+        return self._borderColor
 
-    def setDrawColor(self, color: QColor):
+    def setBorderColor(self, color: QColor):
         '''设置点的描边颜色。
         '''
-        self._drawColor = color
+        self._borderColor = color
         self._penFinal.setColor(color)
-        self.update()  # 更新图元以应用新的画笔颜色
 
     def fillColor(self) -> QColor:
         '''返回点的填充颜色。
@@ -234,4 +233,4 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''设置点的填充颜色。
         '''
         self._fillColor = color
-        self.setBrush(QBrush(color))
+        self._brush.setColor(color)

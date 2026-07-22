@@ -1,15 +1,22 @@
+'''主程序，运行GeoGrapher。
+'''
 
 import sys
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QMainWindow
-from .GeoGridGraph import GeoGridGraph
+
+from PyQt5.QtWidgets import QApplication, QMainWindow
+
+from .GrapherCentralWidget import GrapherCentralWidget
 
 
 def _main():
+    '''运行GeoGrapher。
+    '''
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     window = QMainWindow()
-    gridGraph = GeoGridGraph(window)   #
-    window.setCentralWidget(gridGraph)
+    window.setWindowTitle('GeoGrapher')
+    grapher = GrapherCentralWidget(parent=window)
+    window.setCentralWidget(grapher)
     window.show()
     sys.exit(app.exec())
 

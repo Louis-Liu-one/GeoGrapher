@@ -23,7 +23,7 @@ from .GeoGraphItems.GeoGraphVariable import GeoGraphVariable, GeoGraphIsecNoVar
 from .GeoGraphItems.Interfaces.ItemAttributesSetter import \
     ItemAttributesSetterDialog
 from .GeoGraphItems.Core import DecFloat, PointPos, intersec, distanceTo
-from .Constants import GeoMainMode
+from .Constants import GeoMainMode, secondaryModeClasses
 
 __all__ = ['GeoGraphView']
 
@@ -52,8 +52,8 @@ class GeoGraphView(QGraphicsView):
         self.setDragMode(self.RubberBandDrag)
         self.setRenderHints(QPainter.HighQualityAntialiasing)
         self.setMouseTracking(True)
-        self.mainMode: GeoMainMode = GeoMainMode.SELECT  # 主模式，默认为选择模式
-        self.secondaryMode: GeoSecondaryMode = None      # 次模式
+        self._mainMode: GeoMainMode = GeoMainMode.SELECT     # 主模式，默认为选择模式
+        self._secondaryMode: GeoSecondaryMode | None = None  # 次模式
         # 下列属性在绘制模式创建图元时使用
         self._drawModeSelectedItems: list[GeoGraphItem] = []  # 当前选择过的图元
         self._typePatterns: list[tuple[type]] = []            # 根据次模式决定图元的类型匹配
@@ -62,7 +62,20 @@ class GeoGraphView(QGraphicsView):
             GeoGraphItem = None                # 当前正在设置属性的图元
         self._itemAttributesSetterDialog: \
             ItemAttributesSetterDialog = None  # 当前的图元属性设置对话框
-        self._pressPos: QPoint | None = None  # 鼠标按下时的位置，用于判断是否为点击事件
+        self._pressPos: QPoint | None = None   # 鼠标按下时的位置，用于判断是否为点击事件
+        self._zoomScale = 1.                                      # 缩放倍数
+        self._minimumZoomScale, self._maximumZoomScale = .1, 10.  # 最小、最大缩放倍数
+
+    def toggleMainMode(self, mode: GeoMainMode):
+        '''设置主模式。
+        '''
+        self._mainMode = mode
+
+    def toggleSecondaryMode(self, mode: GeoSecondaryMode):
+        '''设置次模式，并将主模式设为绘制模式。
+        '''
+        self._mainMode = GeoMainMode.DRAW
+        self._secondaryMode = mode
 
     def mousePressEvent(self, event):
         '''按下鼠标时，若主模式为绘制模式，则创建图元或添加父图元。
@@ -70,7 +83,7 @@ class GeoGraphView(QGraphicsView):
         super().mousePressEvent(event)
         self._pressPos = event.pos()
         if event.button() == Qt.LeftButton \
-                and self.mainMode == GeoMainMode.DRAW:
+                and self._mainMode == GeoMainMode.DRAW:
             self._drawModeMousePress(event.pos())
 
     def _drawModeMousePress(self, pos: QPoint):
@@ -96,7 +109,8 @@ class GeoGraphView(QGraphicsView):
         # 从未选择过图元，表明此次点击是第一次，要创建新图元
         if not self._drawModeSelectedItems:
             # 创建图元
-            self._creatingItem: GeoGraphItem = self.secondaryMode.value()
+            self._creatingItem: GeoGraphItem = \
+                secondaryModeClasses[self._secondaryMode]()
             self.scene().addItem(self._creatingItem)
             # 初始化图元的类型匹配
             self._typePatterns = self._creatingItem.typePatterns.copy()
@@ -263,7 +277,7 @@ class GeoGraphView(QGraphicsView):
         '''
         super().keyPressEvent(event)
         if event.key() == Qt.Key_Backspace \
-                and self.mainMode == GeoMainMode.SELECT \
+                and self._mainMode == GeoMainMode.SELECT \
                 and not isinstance(
                     self.scene().focusItem(), QGraphicsTextItem):  # 正在输入文本时不删除
             for item in self.scene().selectedItems():
@@ -291,3 +305,12 @@ class GeoGraphView(QGraphicsView):
             if self._itemAttributesSetterDialog:
                 self._itemAttributesSetterDialog.close()
                 self._itemAttributesSetterDialog = None
+
+    def zoomScaleChanged(self, zoomChange: float):
+        '''缩放时调用。控制缩放比例于一定范围内，并将信号传递给场景。
+        '''
+        newZoomScale = self._zoomScale * zoomChange
+        if self._minimumZoomScale <= newZoomScale <= self._maximumZoomScale:
+            self._zoomScale = newZoomScale
+            self.scale(zoomChange, zoomChange)
+            self.scene().zoomScaleChanged(zoomChange)

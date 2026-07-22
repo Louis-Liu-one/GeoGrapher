@@ -1,4 +1,4 @@
-'''一些常数
+'''一些程序使用的常量
 '''
 
 import enum
@@ -8,10 +8,7 @@ from .GeoGraphItems.GeoGraphSegment import GeoGraphSegment
 from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
 from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
 
-__all__ = [
-    'GeoMainMode', 'GeoSecondaryMode',
-    'mainModes', 'drawModes',
-]
+__all__ = ['GeoMainMode', 'GeoSecondaryMode', 'secondaryModeClasses']
 
 
 class GeoMainMode(enum.Enum):
@@ -26,18 +23,16 @@ class GeoSecondaryMode(enum.Enum):
     '''次模式。
     '''
 
-    POINT = GeoGraphPoint      # 点
-    SEGMENT = GeoGraphSegment  # 线段
-    CIRCLE = GeoGraphCircle    # 圆
-    INTERSECTION = GeoGraphIntersection  # 交点
+    POINT = 0         # 点
+    SEGMENT = 1       # 线段
+    CIRCLE = 2        # 圆
+    INTERSECTION = 3  # 交点
 
 
-mainModes = {
-    'Select': GeoMainMode.SELECT,
-}  # 字符串所对主模式
-drawModes = {
-    'Point': GeoSecondaryMode.POINT,
-    'Segment': GeoSecondaryMode.SEGMENT,
-    'Circle': GeoSecondaryMode.CIRCLE,
-    'Intersection': GeoSecondaryMode.INTERSECTION,
-}  # 字符串所对绘制次模式
+# 各个次模式对应的图元类
+secondaryModeClasses = {
+    GeoSecondaryMode.POINT: GeoGraphPoint,
+    GeoSecondaryMode.SEGMENT: GeoGraphSegment,
+    GeoSecondaryMode.CIRCLE: GeoGraphCircle,
+    GeoSecondaryMode.INTERSECTION: GeoGraphIntersection,
+}
