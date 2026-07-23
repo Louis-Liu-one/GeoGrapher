@@ -1,6 +1,12 @@
 '''一些程序使用的常量
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .GeoGraphItems.GeoGraphItem import GeoGraphItem
+
 import enum
 
 from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
@@ -30,7 +36,7 @@ class GeoSecondaryMode(enum.Enum):
 
 
 # 各个次模式对应的图元类
-secondaryModeClasses = {
+secondaryModeClasses: dict[GeoSecondaryMode, type[GeoGraphItem]] = {
     GeoSecondaryMode.POINT: GeoGraphPoint,
     GeoSecondaryMode.SEGMENT: GeoGraphSegment,
     GeoSecondaryMode.CIRCLE: GeoGraphCircle,

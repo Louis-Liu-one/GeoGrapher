@@ -5,15 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
+    from PySide6.QtWidgets import QWidget
     from ..GeoGraphItem import GeoGraphItem
+    from ...GeoGraphView import GeoGraphView
 
-from PyQt5.QtWidgets import QDialog, QMessageBox, QVBoxLayout, QSizePolicy
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QHeaderView
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import QDialog, QMessageBox, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QHeaderView
+from PySide6.QtWidgets import (
     QLineEdit, QSpinBox, QDoubleSpinBox, QDialogButtonBox, QCheckBox)
-from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt
+from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
 
 from .FormUtils import IntValueSliderSelector, ColorSelector
 
@@ -25,12 +26,12 @@ class ItemAttributesSetterDialog(QDialog):
     '''
 
     def __init__(
-            self, parent: QWidget | None = None,
+            self, parent: GeoGraphView,
             item: GeoGraphItem = None, title: str = 'Set Item Attributes',
             defaultGroupName: str = 'Basic'):
         '''初始化对话框。
 
-        :param parent: 父窗口。
+        :param parent: 父控件，应为视图。
         :param item: 需要设置属性的图元。
         :param title: 对话框标题。
         :param defaultGroupName: 未设置`group`字段的属性的默认组名。
@@ -40,7 +41,7 @@ class ItemAttributesSetterDialog(QDialog):
         self._defaultGroupName = str(defaultGroupName)
         self._initUi()
         self._adjustPosition()
-        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setWindowTitle(title)
 
     def _initUi(self):
@@ -53,8 +54,9 @@ class ItemAttributesSetterDialog(QDialog):
         tree.setColumnCount(2)
         tree.setHeaderLabels(['Attribute', 'Value'])
         # 第一列自适应内容宽度，不截断文字
-        tree.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        tree.header().setSectionResizeMode(1, QHeaderView.Stretch)
+        tree.header().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents)
+        tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         groups = {}
         # 在此添加界面元素
         self._valueGetters = {}    # 存储属性值获取函数的字典，便于后续获取当前属性值
@@ -64,18 +66,20 @@ class ItemAttributesSetterDialog(QDialog):
             if attributeBox is None:
                 continue  # 不支持的属性类型，跳过
             attributeBox.setSizePolicy(
-                QSizePolicy.Expanding, QSizePolicy.Preferred)
-            groupName = attrInfo.get('group', self._defaultGroupName)
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            groupName: str = attrInfo.get('group', self._defaultGroupName)
             if groupName not in groups:
                 groups[groupName] = QTreeWidgetItem(tree, [groupName])
                 groups[groupName].setExpanded(True)
             treeWidget = QTreeWidgetItem(
                 groups[groupName], [attrInfo['title']])
-            treeWidget.setTextAlignment(0, Qt.AlignRight | Qt.AlignVCenter)
+            treeWidget.setTextAlignment(
+                0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             tree.setItemWidget(treeWidget, 1, attributeBox)
 
         buttonBox = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 
@@ -132,13 +136,14 @@ class ItemAttributesSetterDialog(QDialog):
     def _adjustPosition(self):
         '''调整对话框位置，使其出现在窗口左侧。
         '''
-        if self._item and self._item.scene() and self._item.scene().views():
-            topRight = self._item.scene().views()[0].window().frameGeometry()
+        if self._item:
+            topRight = self.parent().window().frameGeometry()
             # 调整对话框横坐标，使其出现在窗口左侧
             self.move(topRight.x() - self.width(), topRight.y())
 
     def accept(self):
-        '''确认设置，更新图元属性。'''
+        '''确认设置，更新图元属性。
+        '''
         for attr, getter in self._valueGetters.items():
             try:
                 self._item.itemAttributes[attr] = getter()  # 更新图元属性
@@ -148,5 +153,5 @@ class ItemAttributesSetterDialog(QDialog):
                     f'The value of attribute "{
                         self._item.itemAttributes.getAttributesInfo(
                             attr)['title']}" is invalid. Skipping.',
-                    QMessageBox.Ok)
+                    QDialogButtonBox.StandardButton.Ok)
         super().accept()

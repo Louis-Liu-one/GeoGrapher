@@ -5,28 +5,35 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
-    from .GeoGraphItems.GeoGraphItem import GeoGraphItem
+    from PySide6.QtGui import QPainter
+    from PySide6.QtCore import QPointF, QRect, QRectF
+    from .GeoGraphView import GeoGraphView
 
 import collections
 
-from PyQt5.QtWidgets import QGraphicsScene
-from PyQt5.QtGui import QPen, QColor
-from PyQt5.QtCore import QLine
+from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtGui import QPen, QColor
+from PySide6.QtCore import QLine
 
+from .GeoGraphItems.GeoGraphItem import GeoGraphItem, GeoGraphPathItem
+from .GeoGraphItems.GeoGraphPoint import GeoGraphPoint
+from .GeoGraphItems.GeoGraphCircle import GeoGraphCircle
+from .GeoGraphItems.GeoGraphIntersection import GeoGraphIntersection
+from .GeoGraphItems.GeoGraphVariable import GeoGraphIsecNoVar
 from .GeoGraphItems.GeoPointLabelsManager import GeoPointLabelsManager
-from .GeoGraphItems.Core import GeoItemsManager
+from .GeoGraphItems.Core import (
+    DecFloat, PointPos, intersec, distanceTo, GeoItemsManager)
+
 
 __all__ = ['GeoGraphScene']
 
 
 class GeoGraphScene(QGraphicsScene):
-    '''GeoGrapher绘制场景。
-    使用方法与`PyQt5.QtWidgets.QGraphicsScene`基本相同。
+    '''GeoGrapher绘制场景。使用方法与`QGraphicsScene`基本相同。
     '''
 
     def __init__(
-            self, parent: QWidget | None = None,
+            self, parent=None,
             darkGridSize=128, darkPenColor='#c0c0c0', darkPenWidth=1.2,
             lightGridSize=32, lightPenColor='#d0d0d0', lightPenWidth=.5,
             backgroundColor='#f1f1f1'):
@@ -51,7 +58,12 @@ class GeoGraphScene(QGraphicsScene):
         self._penLight = QPen(QColor(lightPenColor), lightPenWidth)  # 浅色画笔
         self.setBackgroundBrush(QColor(backgroundColor))
 
-    def drawBackground(self, painter, rect):
+    def views(self) -> list[GeoGraphView]:
+        '''获取场景所在的所有视图。
+        '''
+        return super().views()
+
+    def drawBackground(self, painter: QPainter, rect: QRect | QRectF):
         '''绘制背景网格。
         '''
         super().drawBackground(painter, rect)
@@ -67,10 +79,10 @@ class GeoGraphScene(QGraphicsScene):
                 else linesDark).append(QLine(i, bottom, i, top))
         painter.setPen(self._penLight)
         if linesLight:
-            painter.drawLines(*linesLight)
+            painter.drawLines(linesLight)
         painter.setPen(self._penDark)
         if linesDark:
-            painter.drawLines(*linesDark)
+            painter.drawLines(linesDark)
 
     def zoomScaleChanged(self, zoomChange: float):
         '''放缩比例变化。
@@ -94,13 +106,80 @@ class GeoGraphScene(QGraphicsScene):
             self.lightGridSize *= 2
             self.darkGridSize *= 2
         for item in self.items():
-            item.zoomScaleChanged(zoomChange)
+            if isinstance(item, GeoGraphItem):
+                item.zoomScaleChanged(zoomChange)
+
+    def createPointAt(self, scenePos: QPointF) -> GeoGraphPoint:
+        '''在指定坐标处创建一个点。
+        自动判断该点是否为自由点、一路径上的点或两路径的交点。
+
+        :param scenePos: 创建点的坐标，在场景坐标系下。
+        :returns: 创建好的点。
+        '''
+        # 在指定坐标附近的图元
+        items: list[GeoGraphItem] = [
+            item for item in self.items(scenePos)
+            if isinstance(item, GeoGraphItem) and item.isCreated]
+        if len(items) and all(
+                isinstance(item, GeoGraphPathItem) for item in items):
+            # 若附近有两个及以上的路径图元
+            if len(items) > 1:
+                # 则创建前两个路径图元的交点
+                point = self.createIntersecWithItems(scenePos, items)
+            # 若附近仅一个路径图元
+            else:
+                # 则创建路径上的点
+                point = GeoGraphPoint()
+                point.addMaster(items[0])
+        else:  # 否则创建自由点
+            point = GeoGraphPoint()
+            point.setPos(scenePos)
+        point.isCreated = True
+        self.addItem(point)
+        point.updateSelfPosition()  # 更新点坐标
+        return point
+
+    def createIntersecWithItems(
+            self, scenePos: QPointF,
+            items: list[GeoGraphItem]) -> GeoGraphIntersection:
+        '''以指定图元为路径在指定坐标处创建一个交点。
+        自动判断该点的交点编号，使得该点距离指定坐标较近。
+
+        :param scenePos: 用户点击处的坐标，在场景坐标系下。在该坐标附近创建交点。
+        :param items: 取前两个元素为路径创建交点。
+        :returns: 创建好的交点。
+        '''
+        if len(items) < 2:
+            return
+        point = GeoGraphIntersection()
+        point.addMaster(items[0])
+        point.addMaster(items[1])
+        if isinstance(items[0], GeoGraphCircle) \
+                or isinstance(items[1], GeoGraphCircle):
+            poss = PointPos(DecFloat(scenePos.x()), DecFloat(scenePos.y()))
+            if isinstance(items[0], GeoGraphCircle) \
+                    and isinstance(items[1], GeoGraphCircle):
+                circ1, circ2 = items[0].instance, items[1].instance
+                pos1, pos2 = intersec(
+                    circ1.o().cpos(), circ1.r(), circ2.o().cpos(), circ2.r())
+            else:
+                seg, circ = items[0].instance, items[1].instance
+                if isinstance(items[0], GeoGraphCircle):
+                    seg, circ = circ, seg
+                pos1, pos2 = intersec(
+                    seg.abc(), circ.o().cpos(), circ.r(),
+                    seg.point1().cpos(), seg.point2().cpos())
+            l1, l2 = distanceTo(poss, pos1), distanceTo(poss, pos2)
+            var = GeoGraphIsecNoVar()
+            var.set(1 if float(l1) < float(l2) else 2)  # 按照到两交点到距离自动判断交点编号
+            point.addMaster(var)
+        return point
 
     def addItem(self, item: GeoGraphItem):
         '''添加图元。
         '''
         super().addItem(item)
-        item.zoomScaleChanged(self.zoomScale)
+        item.zoomScaleChanged(self.zoomScale)     # 让图元适应当前缩放倍数
         item.onAddingSelfToScene()                # 调用图元的添加回调函数
         self.itemsManager.addItem(item.instance)  # 添加基础图元
 

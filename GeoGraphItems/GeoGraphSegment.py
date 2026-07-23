@@ -1,7 +1,7 @@
 '''GeoGrapher线段图元
 '''
 
-from PyQt5.QtGui import QPainterPath
+from PySide6.QtGui import QPainterPath
 
 from .GeoGraphItem import GeoGraphPathItem
 from .GeoGraphPoint import GeoGraphPoint
@@ -35,8 +35,11 @@ class GeoGraphSegment(GeoGraphPathItem):
     def rawShape(self):
         '''原始路径形状，不具有选中范围。
         '''
-        path = QPainterPath(self._masters[0].pos())
-        path.lineTo(
+        firstPointPos = self.mapFromScene(self._masters[0].pos())
+        secondPointPos = self.mapFromScene(
             self._mousePos() if len(self._masters) == 1
             else self._masters[1].pos())
+        path = QPainterPath()
+        path.moveTo(firstPointPos)
+        path.lineTo(secondPointPos)
         return path

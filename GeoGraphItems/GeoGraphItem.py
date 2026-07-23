@@ -5,21 +5,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Iterator
 
 if TYPE_CHECKING:
-    from PyQt5.QtCore import QPointF
+    from PySide6.QtGui import QPainter
+    from PySide6.QtCore import QPointF
+    from ..GeoGraphScene import GeoGraphScene
     from .Interfaces.ItemAttributesSetter import ItemAttributesSetterDialog
 
 from collections.abc import MutableMapping
 
-from PyQt5.QtWidgets import QStyle, QGraphicsItem, QGraphicsPathItem
-from PyQt5.QtGui import QCursor, QPen, QColor
-from PyQt5.QtGui import QPainterPath, QPainterPathStroker
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QStyle, QGraphicsItem
+from PySide6.QtGui import QCursor, QPen, QColor
+from PySide6.QtGui import QPainterPath, QPainterPathStroker
+from PySide6.QtCore import Qt
 
 __all__ = ['GeoGraphItem', 'GeoGraphPathItem', 'GeoGraphItemAttributes']
 
 
 class GeoGraphItem(QGraphicsItem):
-    '''所有图元类的基类。此类不应创建实例。
+    '''所有图元类的基类。此类不应被创建实例。
     '''
     # 图元默认属性，子类可在此基础上添加以设置默认属性
     ATTRIBUTES_INFO = {
@@ -54,8 +56,13 @@ class GeoGraphItem(QGraphicsItem):
             = GeoGraphItemAttributes(self, self.ATTRIBUTES_INFO)  # 图元属性
         self.itemAttributesSetterDialog: \
             ItemAttributesSetterDialog | None = None  # 图元属性设置对话框
-        self.typePatterns: set[tuple[type]] = set()
-        self.setFlag(self.ItemIsSelectable)
+        self.typePatterns: set[tuple[type[GeoGraphItem]]] = set()
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+
+    def scene(self) -> GeoGraphScene:
+        '''获取图元所在的场景。
+        '''
+        return super().scene()
 
     def shortIdentifier(self) -> str:
         '''返回图元的简短标识字符串。子类可覆盖此方法以提供更具体的标识字符串。
@@ -115,10 +122,10 @@ class GeoGraphItem(QGraphicsItem):
         pass
 
     def typePatternsFilter(
-            self, patterns: set[tuple[type]],
-            idx: int, itemType: type, loose: bool = False) -> set[tuple[type]]:
-        '''筛选可用的类型匹配。参见
-        `GeoGrapher.GeoGridGraphView.GeoGridGraphView._drawModeMousePress()`。
+            self, patterns: set[tuple[type[GeoGraphItem]]],
+            idx: int, itemType: type[GeoGraphItem], loose: bool = False) \
+            -> set[tuple[type[GeoGraphItem]]]:
+        '''筛选可用的类型匹配。参见`GeoGraphView._clickInDrawMode()`。
 
         :param patterns: 可用的所有类型匹配。
         :param idx: 当前匹配位置。
@@ -196,12 +203,13 @@ class GeoGraphItem(QGraphicsItem):
     def itemChange(self, change, value):
         '''图元状态改变时调用。子类可覆盖此方法以处理特定状态改变。
         '''
-        if change == self.ItemSelectedChange and self.isCreated:
+        if change == QGraphicsItem.GraphicsItemChange.ItemSelectedChange \
+                and self.isCreated:
             if value:  # 选中
                 self.openItemAttributesDialog()
             else:      # 取消选中
                 self.closeItemAttributesDialog()
-        elif change == self.ItemSceneChange:
+        elif change == QGraphicsItem.GraphicsItemChange.ItemSceneChange:
             if value is None:
                 self.closeItemAttributesDialog()  # 删除图元属性设置对话框实例
         return super().itemChange(change, value)
@@ -225,28 +233,35 @@ class GeoGraphItem(QGraphicsItem):
         return view.mapToScene(view.mapFromGlobal(QCursor.pos()))
 
 
-class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
-    '''所有路径图元类的基类。此类不应创建实例。
+class GeoGraphPathItem(GeoGraphItem):
+    '''所有路径图元类的基类。此类不应被创建实例。
     '''
 
     def __init__(self):
         '''初始化路径图元。
         '''
         super().__init__()
-        self._penDrag = QPen(QColor('#000000'), 1., Qt.DashLine)  # 创建时的画笔
+        self._penDrag = QPen(
+            QColor('#000000'), 1., Qt.PenStyle.DashLine)  # 创建时的画笔
         self._penFinal = QPen(QColor('#000000'))     # 创建完成后未选中时的画笔
         self._penSelected = QPen(QColor('#808080'))  # 创建完成后选中时的画笔
-        self._selectWidth = 10.  # 选中范围的宽度
+        self._selectWidth = 10.      # 选中范围的宽度
         # 所有画笔
         self._pens = [self._penDrag, self._penFinal, self._penSelected]
         self.setZValue(-1)  # 路径图元位于所有图元的下方
+
+    def updateSelfPosition(self):
+        '''路径图元不更新位置，仅调用`prepareGeometryChange()`方法触发重绘。
+        '''
+        super().updateSelfPosition()
+        self.prepareGeometryChange()
 
     def rawShape(self) -> QPainterPath:
         '''原始的路径形状，不具有选中范围。此方法应被子类覆盖。
         '''
         pass
 
-    def shape(self):
+    def shape(self) -> QPainterPath:
         '''路径形状。
 
         :returns: 路径的形状，具有带宽度的选中范围。
@@ -256,13 +271,17 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
         return pathStroker.createStroke(
             QPainterPath() if not self._masters else self.rawShape())
 
-    def paint(self, painter, option, widget=None):
+    def boundingRect(self):
+        '''使用自身路径的矩形作为图元的矩形。
+        '''
+        return self.shape().boundingRect()
+
+    def paint(self, painter: QPainter, option, widget=None):
         '''绘制路径。根据图元情况选择画笔。
         '''
         if not self.isCreated:
-            self.update()  # 只有正在创建时才需要不断更新以不断重绘
-        self.setPath(self.shape())
-        if option.state & QStyle.State_Selected:
+            self.prepareGeometryChange()  # 只有正在创建时才需要不断重绘
+        if option.state & QStyle.StateFlag.State_Selected:
             painter.setPen(self._penSelected)
         else:
             painter.setPen(
@@ -280,6 +299,24 @@ class GeoGraphPathItem(QGraphicsPathItem, GeoGraphItem):
 
 class GeoGraphItemAttributes(MutableMapping):
     '''图元属性类。以字典形式存储图元属性。
+
+    使用`GeoGraphItemAttributes(item, attributesInfo)`创建图元属性实例。
+    `attributesInfo`是一个字典，键是图元的各个属性名称，值是该属性的描述。
+    每个属性的描述是一个字典，键是各个字段，值是该字段对应的值。支持的字段有：
+
+    - `title`：属性的自然语言描述。若不提供，则以字段名的首字母大写形式为描述。
+    - `group`：属性所在的分组。可以用此字段为属性分组，也可以不提供。
+    - `default`：属性的默认值。若不提供，则以`getter`字段的返回值为默认值。
+    - `min, max, step`：属性的最小值、最大值与步长。仅限整数或浮点数属性。
+    - `decimals`：属性的浮点有效位数。仅限浮点数属性。
+    - `type`：属性的类型。若不提供，则以默认值的类型为属性的类型。
+    - `getter: Callable[[] -> Any]`：一个无参函数，返回属性的值。
+        未提供默认值时以此为默认值，但不会在初始化时直接设置，而是懒惰求值。
+    - `setter: Callable[[Any] -> None]`：一个函数，设置属性的值。
+        当调用`GeoGraphItemAttributes.__setitem__()`时会调用此函数。
+
+    `GeoGraphItemAttributes.__setitem__()`会对参数进行校验，
+    但仅检查`type`、`min`、`max`字段，其余字段供`ItemAttributesSetterDialog`使用。
     '''
     SPECIAL_ATTRTYPES = {'angle': int, 'color': QColor}  # 特殊属性类型，需特殊处理
 

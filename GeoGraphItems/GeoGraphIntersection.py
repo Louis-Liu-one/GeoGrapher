@@ -1,6 +1,8 @@
 '''GeoGrapher交点图元
 '''
 
+from PySide6.QtWidgets import QGraphicsItem
+
 from .GeoGraphPoint import GeoGraphPoint
 from .GeoGraphSegment import GeoGraphSegment
 from .GeoGraphCircle import GeoGraphCircle
@@ -18,8 +20,7 @@ class GeoGraphIntersection(GeoGraphPoint):
         '''初始化交点图元。
         '''
         super().__init__()
-        self.setFlag(self.ItemIsMovable, False)
-        self.setFlag(self.ItemSendsGeometryChanges, False)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
         self.isUpdatable: bool = False
         self.isFree: bool = False     # 非自由点
         self.isIntersec: bool = True  # 是交点

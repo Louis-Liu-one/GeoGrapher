@@ -3,7 +3,7 @@
 
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from .GrapherCentralWidget import GrapherCentralWidget
 

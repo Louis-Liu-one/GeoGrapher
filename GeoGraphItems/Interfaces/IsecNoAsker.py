@@ -1,9 +1,9 @@
 '''交点编号询问对话框
 '''
 
-from PyQt5.QtWidgets import QVBoxLayout, QFormLayout
-from PyQt5.QtWidgets import QDialog, QSpinBox, QDialogButtonBox
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QVBoxLayout, QFormLayout
+from PySide6.QtWidgets import QDialog, QSpinBox, QDialogButtonBox
+from PySide6.QtCore import Qt
 
 __all__ = ['IsecNoAskerDialog']
 
@@ -18,7 +18,7 @@ class IsecNoAskerDialog(QDialog):
         super().__init__(parent)
         self._initUi()
         self.setWindowTitle(title)
-        self.setWindowModality(Qt.ApplicationModal)
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
     def _initUi(self):
         '''初始化界面。
@@ -29,7 +29,8 @@ class IsecNoAskerDialog(QDialog):
         formLayout.addRow('Intersection Number:', self._resultBox)
 
         buttonBox = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel)
         buttonBox.accepted.connect(self.accept)
         buttonBox.rejected.connect(self.reject)
 

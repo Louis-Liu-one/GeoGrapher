@@ -1,8 +1,8 @@
 '''GeoGrapher圆图元
 '''
 
-from PyQt5.QtGui import QPainterPath
-from PyQt5.QtCore import QPointF, QLineF
+from PySide6.QtGui import QPainterPath
+from PySide6.QtCore import QPointF, QLineF
 
 from .GeoGraphItem import GeoGraphPathItem
 from .GeoGraphPoint import GeoGraphPoint
@@ -36,10 +36,11 @@ class GeoGraphCircle(GeoGraphPathItem):
         '''原始路径形状，不具有选中范围。
         圆图元的路径形状仅包含圆周附近，而不包含圆内。
         '''
-        firstPosX = self._masters[0].x()
-        firstPosY = self._masters[0].y()
-        secondPos = self._mousePos() \
-            if len(self._masters) == 1 else self._masters[1].pos()
+        firstPos = self.mapFromScene(self._masters[0].pos())
+        firstPosX, firstPosY = firstPos.x(), firstPos.y()
+        secondPos = self.mapFromScene(
+            self._mousePos()
+            if len(self._masters) == 1 else self._masters[1].pos())
         radius = QLineF(self._masters[0].pos(), secondPos).length()
         path = QPainterPath(QPointF(firstPosX + radius, firstPosY))
         # 画两次弧，以保证圆图元不包含圆内部分

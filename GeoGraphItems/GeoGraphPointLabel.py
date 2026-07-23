@@ -7,11 +7,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .GeoPointLabelsManager import GeoPointLabelsManager
 
-import math
-
-from PyQt5.QtWidgets import QGraphicsTextItem
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsTextItem
+from PySide6.QtGui import QFont, QColor
+from PySide6.QtCore import Qt, QLineF
 
 from .GeoGraphItem import GeoGraphItem
 from .Core import GeoItem
@@ -19,7 +17,7 @@ from .Core import GeoItem
 __all__ = ['GeoGraphPointLabel']
 
 
-class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
+class GeoGraphPointLabel(QGraphicsTextItem):
     '''点图元标签类，是点图元旁的标签。
     '''
 
@@ -28,18 +26,19 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
 
         :param parent: 待标记的点图元。
         '''
-        super().__init__()
+        super().__init__(parent)
         self.instance = GeoItem()
-        self.setParentItem(parent)
-        self.pointLabelsManager: GeoPointLabelsManager = None
+        self.pointLabelsManager: GeoPointLabelsManager | None = None
         self._label: str = None
         self._labelDistance: float = 10.     # 标签与点图元的距离
         self._labelAngle: int | float = -45  # 标签相对于点图元的角度
         self.setLabelDistance(self._labelDistance)  # 根据距离和角度设置标签位置
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)  # 可编辑的标签
-        self.setDefaultTextColor(QColor('#000000'))  # 字体颜色
-        self.setCursor(Qt.IBeamCursor)             # 鼠标样式
-        self.setFlag(self.ItemStacksBehindParent)  # 标签位于点图元下方
+        self.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextEditorInteraction)  # 可编辑的标签
+        self.setDefaultTextColor(QColor('#000000'))      # 字体颜色
+        self.setCursor(Qt.CursorShape.IBeamCursor)         # 鼠标样式
+        self.setFlag(
+            QGraphicsItem.GraphicsItemFlag.ItemStacksBehindParent)  # 标签位于点图元下方
         self.setFont(QFont(None, 18))  # 设置初始字号为18
 
     def setLabel(self, label: str | None = None) -> bool:
@@ -66,9 +65,8 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
         '''设置标签与点图元的距离。
         '''
         self._labelDistance = distance
-        angle = math.radians(self._labelAngle)
-        self._realx = distance * math.cos(angle)
-        self._realy = -distance * math.sin(angle)
+        pos = QLineF.fromPolar(distance, self._labelAngle).p2()
+        self._realx, self._realy = pos.x(), pos.y()
         self._updatePos()
 
     def labelAngle(self) -> float:
@@ -78,11 +76,12 @@ class GeoGraphPointLabel(QGraphicsTextItem, GeoGraphItem):
 
     def setLabelAngle(self, angle: float):
         '''设置标签相对于点图元的角度。
+
+        :param angle: 标签所在角度，使用角度制。
         '''
         self._labelAngle = int(angle)
-        angle = math.radians(angle)
-        self._realx = self._labelDistance * math.cos(angle)
-        self._realy = -self._labelDistance * math.sin(angle)
+        pos = QLineF.fromPolar(self._labelDistance, angle).p2()
+        self._realx, self._realy = pos.x(), pos.y()
         self._updatePos()
 
     def _updatePos(self):

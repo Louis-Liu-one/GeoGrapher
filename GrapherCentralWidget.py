@@ -6,11 +6,11 @@ from typing import Any, Callable
 
 from pathlib import Path
 
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QSplitter)
-from PyQt5.QtGui import QPainter, QIcon, QImage, QPixmap
-from PyQt5.QtSvg import QSvgRenderer
-from PyQt5.QtCore import Qt, QSize, QSizeF
+from PySide6.QtGui import QPainter, QIcon, QImage, QPixmap
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtCore import Qt, QSize, QSizeF
 import qtawesome as qta
 
 from .GeoGraphScene import GeoGraphScene
@@ -31,8 +31,9 @@ def _svgToIcon(path: str, size: QSize = QSize(32, 32)) -> QIcon:
     '''
     renderer = QSvgRenderer(str(Path(__file__).parent.resolve() / path))
     img = QImage(renderer.viewBoxF().size().scaled(
-        QSizeF(size), Qt.KeepAspectRatio).toSize(), QImage.Format_ARGB32)
-    img.fill(Qt.transparent)
+        QSizeF(size), Qt.AspectRatioMode.KeepAspectRatio).toSize(),
+        QImage.Format.Format_ARGB32)
+    img.fill(Qt.GlobalColor.transparent)
     painter = QPainter(img)
     renderer.render(painter)
     painter.end()

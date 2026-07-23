@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from PyQt5.QtGui import QIcon
+    from PySide6.QtGui import QIcon
 
-from PyQt5.QtWidgets import QVBoxLayout, QGridLayout, QSizePolicy
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import QVBoxLayout, QGridLayout, QSizePolicy
+from PySide6.QtWidgets import (
     QWidget, QToolBox, QButtonGroup, QPushButton, QLabel)
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, QSize, QTimer
 
 
 __all__ = ['ModeControlPanel']
@@ -40,13 +40,13 @@ class ModeToggleButton(QPushButton):
         textLabel = QLabel(text)  # 文字
         textLabel.setFont(QFont(None, 8))
         textLabel.setWordWrap(True)
-        textLabel.setAlignment(Qt.AlignCenter)
+        textLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(10)
-        layout.addWidget(iconLabel, alignment=Qt.AlignCenter)
-        layout.addWidget(textLabel, alignment=Qt.AlignCenter)
+        layout.addWidget(iconLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(textLabel, alignment=Qt.AlignmentFlag.AlignCenter)
 
 
 class ModeToggleButtonGroupBox(QWidget):
@@ -68,12 +68,13 @@ class ModeToggleButtonGroupBox(QWidget):
     def _initUi(self):
         '''初始化按钮组界面。
         '''
-        # 必须使用`QSizePolicy.Ignored`使控件宽度严格等于父控件宽度
-        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        # 必须使用`QSizePolicy.Policy.Ignored`使控件宽度严格等于父控件宽度
+        self.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self._gridLayout: QGridLayout = QGridLayout(self)
         self._gridLayout.setSpacing(12)
         self._gridLayout.setContentsMargins(10, 10, 10, 10)
-        self._gridLayout.setAlignment(Qt.AlignTop)
+        self._gridLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def addButton(self, button: ModeToggleButton):
         '''添加一个按钮。

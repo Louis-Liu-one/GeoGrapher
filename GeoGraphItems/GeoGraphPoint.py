@@ -5,11 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from PySide6.QtGui import QPainter
     from .GeoGraphItem import GeoGraphPathItem
 
-from PyQt5.QtWidgets import QStyle, QApplication, QGraphicsEllipseItem
-from PyQt5.QtGui import QPen, QBrush, QColor
-from PyQt5.QtCore import Qt, QPointF
+from PySide6.QtWidgets import QStyle, QApplication, QGraphicsItem
+from PySide6.QtGui import QPen, QBrush, QColor
+from PySide6.QtCore import Qt, QPointF, QRectF
 
 from .GeoGraphItem import GeoGraphItem
 from .GeoGraphPointLabel import GeoGraphPointLabel
@@ -19,7 +20,7 @@ from .Core import (
 __all__ = ['GeoGraphPoint']
 
 
-class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
+class GeoGraphPoint(GeoGraphItem):
     '''点图元类，也是其它点图元类的基类。
     '''
     ATTRIBUTES_INFO = {
@@ -70,9 +71,10 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self._penSelected = QPen(self._selectedColor, 2.)  # 被选中时的画笔
         self._brush = QBrush(self._fillColor)              # 用于填充的刷子
         self._pens = [self._penFinal, self._penSelected]   # 所有画笔
+        self._rect = QRectF()                              # 点所在矩形
         self.setPointSize(self._pointSize)
-        self.setFlag(self.ItemIsMovable)
-        self.setFlag(self.ItemSendsGeometryChanges)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
         self.isUpdatable: bool = True                # 是否可被更新
         self.isFree: bool = True                     # 是否为自由点
         self.onPath: GeoGraphPathItem | None = None  # 所在路径
@@ -120,8 +122,7 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         self.isFree = point.isFree
         self._masters = []
         if point.isIntersec:  # 是交点
-            self.setFlag(self.ItemIsMovable, False)
-            self.setFlag(self.ItemSendsGeometryChanges, False)
+            self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
             self.isUpdatable = False
             self.isIntersec = True
             self.instance = GeoIntersection()
@@ -133,42 +134,49 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         else:  # 是自由点
             self.ancestors = set()
 
-    def paint(self, painter, option, widget=None):
+    def boundingRect(self):
+        '''点图元所在矩形。
+        '''
+        return self._rect
+
+    def paint(self, painter: QPainter, option, widget=None):
         '''绘制点图元。自动对点的选中状态进行处理。
         '''
         # 根据选中状态设置画笔
-        if option.state & QStyle.State_Selected:
+        if option.state & QStyle.StateFlag.State_Selected:
             painter.setPen(self._penSelected)
         else:
             painter.setPen(self._penFinal)
         painter.setBrush(self._brush)
-        painter.drawEllipse(self.rect())
+        painter.drawEllipse(self._rect)
 
     def _newPosition(self, pos: QPointF) -> QPointF:
         '''根据鼠标移动计算点图元的实际位置。
         若点在路径上，则返回鼠标位置在路径上的投影坐标；
-        若点为自由点，则返回网格吸附后的坐标。
+        若点为自由点，则返回网格吸附后的坐标；否则点为固定点，直接返回`pos`。
         仅被`self.itemChange()`调用。
 
         :param pos: 鼠标位置。
         :returns: 返回的点位置。
         '''
-        if not self.isFree:  # 路径上
+        if not self.isFree and self.onPath:  # 路径上
             ins = self.onPath.instance
             poss = PointPos(DecFloat(pos.x()), DecFloat(pos.y()))
             fpos = footPoint(poss, ins.abc()) \
                 if isinstance(ins, GeoSegment) \
                 else footPoint(poss, ins.o().cpos(), ins.r())
             return QPointF(float(fpos.x), float(fpos.y))
-        # 自由点，开启网格吸附
-        gridSize = self.scene().lightGridSize
-        xGrid, yGrid = pos.x(), pos.y()
-        # 若点到网格距离小于1/6的网格大小，则吸附到网格上
-        if abs(gridSize / 2 - pos.x() % gridSize) > gridSize / 3:
-            xGrid = round(pos.x() / gridSize) * gridSize
-        if abs(gridSize / 2 - pos.y() % gridSize) > gridSize / 3:
-            yGrid = round(pos.y() / gridSize) * gridSize
-        return QPointF(xGrid, yGrid)
+        elif self.isFree:
+            # 自由点，开启网格吸附
+            gridSize = self.scene().lightGridSize
+            xGrid, yGrid = pos.x(), pos.y()
+            # 若点到网格距离小于1/6的网格大小，则吸附到网格上
+            if abs(gridSize / 2 - pos.x() % gridSize) > gridSize / 3:
+                xGrid = round(pos.x() / gridSize) * gridSize
+            if abs(gridSize / 2 - pos.y() % gridSize) > gridSize / 3:
+                yGrid = round(pos.y() / gridSize) * gridSize
+            return QPointF(xGrid, yGrid)
+        return pos
 
     def updateSelfPosition(self):
         '''更新自身位置。
@@ -197,9 +205,13 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''移动点时调用。参见`self._newPosition()`。
         '''
         if self.scene() \
-                and QApplication.mouseButtons() == Qt.LeftButton \
-                and change == self.ItemPositionChange:
+                and QApplication.mouseButtons() == Qt.MouseButton.LeftButton \
+                and change == \
+                QGraphicsItem.GraphicsItemChange.ItemPositionChange:
             return self._newPosition(value)
+        elif self.scene() and (self.isFree or self.onPath) and change \
+                == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
+            self.scene().updateItems([self])  # 图元位置变化，递归更新子图元
         return super().itemChange(change, value)
 
     def pointSize(self) -> float:
@@ -211,7 +223,8 @@ class GeoGraphPoint(QGraphicsEllipseItem, GeoGraphItem):
         '''设置点的大小。
         '''
         self._pointSize = size
-        self.setRect(-size / 2, -size / 2, size, size)
+        self.prepareGeometryChange()  # 修改矩形前要通知场景准备
+        self._rect = QRectF(-size / 2, -size / 2, size, size)
 
     def borderColor(self) -> QColor:
         '''返回点的描边颜色。

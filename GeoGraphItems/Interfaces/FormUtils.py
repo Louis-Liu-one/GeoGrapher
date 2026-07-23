@@ -1,10 +1,10 @@
 '''一些表单组件的工具类
 '''
 
-from PyQt5.QtWidgets import QWidget, QColorDialog, QVBoxLayout
-from PyQt5.QtWidgets import QSlider, QSpinBox, QFrame
-from PyQt5.QtGui import QColor
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QColorDialog, QVBoxLayout
+from PySide6.QtWidgets import QSlider, QSpinBox, QFrame
+from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
 
 __all__ = ['IntValueSliderSelector', 'ColorSelector']
 
@@ -17,7 +17,7 @@ class IntValueSliderSelector(QWidget):
         '''初始化选择器。
         '''
         super().__init__(parent)
-        self._slider: QSlider = QSlider(Qt.Horizontal)
+        self._slider: QSlider = QSlider(Qt.Orientation.Horizontal)
         self._spin: QSpinBox = QSpinBox()
 
         layout = QVBoxLayout(self)
@@ -88,14 +88,14 @@ class ColorSelector(QFrame):
         '''
         # 颜色预览色块
         self.setFixedHeight(24)
-        self.setFrameShape(QFrame.Box)
-        self.setCursor(Qt.PointingHandCursor)
+        self.setFrameShape(QFrame.Shape.Box)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._updateBackground()
 
     def mousePressEvent(self, event):
         '''鼠标点击事件，弹出颜色选择对话框。
         '''
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             self._openColorPickerDialog()
         super().mousePressEvent(event)
 
